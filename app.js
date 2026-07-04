@@ -48,6 +48,17 @@
     return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
   }
 
+  /**
+   * Real device/browser current time, as decimal hours-of-day (0-24).
+   * This is what makes the "現在" (now) marker on the chart genuinely
+   * correspond to the moment you pressed "開始分析", rather than a value
+   * derived only from the form inputs.
+   */
+  function getRealNowClock() {
+    const now = new Date();
+    return now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  }
+
   function readFloat(id, fallback) {
     const el = document.getElementById(id);
     const v = parseFloat(el.value);
@@ -137,8 +148,12 @@
     const sAtWake = params.hMinus0;
     const sNow = M.sDuringWake(hoursAwakeNow, 0.0, sAtWake, params);
 
-    // "Now", on the same absolute clock-time scale as circadianMinTime.
-    const nowClock = habitualWake + hoursAwakeNow;
+    // "Now" is taken directly from the device's real clock, so the chart's
+    // "現在" marker and the x-axis clock-time labels genuinely correspond
+    // to the moment you pressed "開始分析" -- not a value re-derived from
+    // the form inputs (habitualWake + hoursAwakeNow is only used to work
+    // out the circadian phase and the current sleep-pressure level).
+    const nowClock = getRealNowClock();
 
     const result = M.simulate(params, sNow, false, 48.0, 0.02, nowClock);
 
@@ -163,7 +178,7 @@
     const [tSleep, tWake, tNat] = M.naturalPeriod(params);
 
     const lines = [];
-    lines.push(["目前時間（依你輸入推算）", "約 " + fmtClock(nowClock)]);
+    lines.push(["現在時間（取自你的裝置時鐘）", "約 " + fmtClock(nowClock)]);
     lines.push(["目前睡意指數", idx.toFixed(0) + " / 100（0=剛睡飽，100=已達模型入睡閾值）"]);
     lines.push(["預測自然入睡時間", "約 " + predictedBedtime]);
     lines.push(["預測自然起床時間", "約 " + predictedWake]);
@@ -231,7 +246,7 @@
     const H = canvas.height;
     ctx.clearRect(0, 0, W, H);
 
-    const padL = 55, padR = 20, padT = 50, padB = 45;
+    const padL = 55, padR = 20, padT = 50, padB = 60;
     const plotW = W - padL - padR;
     const plotH = H - padT - padB;
 
@@ -278,16 +293,44 @@
       ctx.stroke();
     }
 
-    // X ticks (every 6 hours)
+    // X ticks (every 6 hours), labelled with the actual clock time
+    // ("HH:MM") instead of "hours from now" so the chart reads like a
+    // normal timeline. A thin dashed marker line + small label highlights
+    // whenever a tick crosses midnight, since e.g. 06:00 today and 06:00
+    // tomorrow would otherwise look identical.
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
+    const startDay = Math.floor(nowClock / 24);
+    let prevDay = startDay;
     for (let t = 0; t <= tMax + 0.001; t += 6) {
       const x = xPix(t);
+      const absT = nowClock + t;
+      const dayOffset = Math.floor(absT / 24);
+
       ctx.fillStyle = "#333";
-      ctx.fillText(t.toFixed(0), x, padT + plotH + 8);
+      ctx.font = "12px sans-serif";
+      ctx.fillText(fmtClock(absT), x, padT + plotH + 8);
+
+      if (dayOffset !== prevDay) {
+        ctx.strokeStyle = "#bbb";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x, padT);
+        ctx.lineTo(x, padT + plotH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#888";
+        ctx.font = "10px sans-serif";
+        ctx.fillText("(+" + (dayOffset - startDay) + " 天)", x, padT + plotH + 22);
+      }
+      prevDay = dayOffset;
     }
     ctx.textAlign = "center";
-    ctx.fillText("距離現在的時間（小時）", padL + plotW / 2, padT + plotH + 26);
+    ctx.font = "12px sans-serif";
+    ctx.fillStyle = "#333";
+    ctx.fillText("時間（時:分）", padL + plotW / 2, padT + plotH + 40);
 
     ctx.save();
     ctx.translate(14, padT + plotH / 2);
@@ -298,6 +341,7 @@
 
     ctx.textAlign = "center";
     ctx.font = "14px sans-serif";
+    ctx.fillStyle = "#333";
     ctx.fillText("雙歷程模型：未來 48 小時睡眠壓力模擬", padL + plotW / 2, 14);
     ctx.font = "11px sans-serif";
     ctx.fillStyle = "#666";
@@ -326,6 +370,24 @@
     drawLine("hPlus", "#b5342c", true);
     drawLine("hMinus", "#2c6db5", true);
     drawLine("s", "#111111", false);
+
+    // Explicit "現在" (now) marker at t=0, drawn on top of the curves so
+    // it's unambiguous which point on the timeline is "right now" (as
+    // opposed to a generic "0" that used to sit on the x-axis).
+    const xNow = xPix(0);
+    ctx.strokeStyle = "#2c8a4b";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.moveTo(xNow, padT);
+    ctx.lineTo(xNow, padT + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#2c8a4b";
+    ctx.font = "11px sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText("現在 " + fmtClock(nowClock), xNow + 4, padT + 14);
 
     // Legend
     const legendItems = [
