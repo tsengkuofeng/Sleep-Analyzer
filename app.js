@@ -59,6 +59,34 @@
     return now.getHours() + now.getMinutes() / 60 + now.getSeconds() / 3600;
   }
 
+  /**
+   * Hours elapsed since today's actual wake-up time, computed from real
+   * clock time so the user never has to do this math themselves (this
+   * used to be a manually-typed number, which is awkward to work out by
+   * hand -- especially late at night).
+   *
+   * Assumes today's wake-up happened within the last 24 h (normal daily
+   * use case). If `todayWake` is later than `nowClock` -- e.g. entered by
+   * mistake, or genuinely spans midnight -- we wrap by adding 24 h rather
+   * than showing a negative number.
+   */
+  function computeHoursAwake(todayWake, nowClock) {
+    let diff = nowClock - todayWake;
+    if (diff < 0) diff += 24;
+    return diff;
+  }
+
+  /** Re-reads today's wake time + the real clock, and refreshes the
+   * (read-only) "已經清醒幾小時" field so the user can see it update live
+   * as soon as they set their wake-up time, before they even press
+   * "開始分析". */
+  function updateHoursAwakeDisplay() {
+    const todayWake = parseTimeInput(document.getElementById("todayWakeTime").value, 7.0);
+    const hours = computeHoursAwake(todayWake, getRealNowClock());
+    document.getElementById("hoursAwakeNow").value = hours.toFixed(1);
+    return hours;
+  }
+
   function readFloat(id, fallback) {
     const el = document.getElementById(id);
     const v = parseFloat(el.value);
@@ -132,7 +160,11 @@
 
   function analyze() {
     const habitualWake = parseTimeInput(document.getElementById("habitualWake").value, 7.0);
-    const hoursAwakeNow = readFloat("hoursAwakeNow", 6.0);
+    // "已經清醒幾小時" is no longer typed in by hand -- it's derived from
+    // "今天實際幾點起床" and the device's real clock, then written back
+    // into the (read-only) field so the number on screen always matches
+    // what was actually used in the calculation below.
+    const hoursAwakeNow = updateHoursAwakeDisplay();
     const recentAvgSleep = readFloat("recentAvgSleep", 6.5);
     const desiredSleep = readFloat("desiredSleep", 8.0);
     const wantExercise = document.getElementById("wantExercise").checked;
@@ -421,10 +453,15 @@
 
   function fillDemoValues() {
     document.getElementById("habitualWake").value = "07:00";
-    document.getElementById("hoursAwakeNow").value = "6";
+    // Demo "today's wake time" is set 6 hours before the real current
+    // time, so the demo reproduces the same ~6h-awake scenario used
+    // throughout this project's testing, regardless of when it's run.
+    const demoWake = (getRealNowClock() - 6 + 24) % 24;
+    document.getElementById("todayWakeTime").value = fmtClock(demoWake);
     document.getElementById("recentAvgSleep").value = "6.5";
     document.getElementById("desiredSleep").value = "8";
     document.getElementById("wantExercise").checked = true;
+    updateHoursAwakeDisplay();
   }
 
   window.addEventListener("DOMContentLoaded", function () {
@@ -433,5 +470,7 @@
       fillDemoValues();
       analyze();
     });
+    document.getElementById("todayWakeTime").addEventListener("input", updateHoursAwakeDisplay);
+    updateHoursAwakeDisplay();
   });
 })();
