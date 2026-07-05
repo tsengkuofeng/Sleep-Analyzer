@@ -179,7 +179,7 @@
     lastAnalysis = {
       inputs: { age, desiredSleep, habitualWake, preferredWake, actualWakeToday, actualSleepHours,
                 ess, essScore, sleepLatencyMin, awakenings, exerciseType },
-      derived: { socialJetlag, circadianMinTime, sleepEfficiency, wakeEffort, nowClock, sNow,
+      derived: { socialJetlag, circadianMinTime, sleepEfficiency, wakeEffort, nowClock, nowDate: now, sNow,
                  essMax, tSleepNat, tWakeNat, tNat, ageAmplitudeFactor: params.ageAmplitudeFactor },
       result,
     };
@@ -268,7 +268,7 @@
     ];
     reportEl.appendChild(buildAccordion(lines));
 
-    drawChart(result, derived.nowClock);
+    drawChart(result, derived.nowClock, derived.nowDate);
     renderExerciseAdvice(a);
     renderGlossary();
   }
@@ -327,12 +327,15 @@
       ["社交時差 (Social Jetlag)", "平常因為上班上課等社會作息、被迫起床時間，和你身體真正偏好的起床時間之間的落差，落差越大代表越「時差」。"],
       ["睡眠效率 (SE)", "實際睡著時間 ÷ 躺在床上的總時間；數字越低代表翻來覆去、半夜清醒的比例越高。"],
       ["睡眠負債", "目標睡眠時數與實際睡眠時數的差距，長期累積會讓睡眠壓力基準線持續墊高。"],
+      ["真實時型", "根據你「自由選擇偏好起床時間」推算出的生理時鐘傾向，分成早鳥型、中間型、夜貓型。早鳥型代表生理時鐘低點較早，通常較容易早睡早起；夜貓型相反，生理時鐘低點較晚，容易晚睡晚起；中間型介於兩者之間，是最常見的類型，早睡早起或晚睡晚起都還算能適應。這只是傾向分類，不是絕對，僅供參考。"],
+      ["主觀嗜睡度 (mini-ESS) 分數怎麼看", "總分 0–12：0–3 分偏低，白天精神狀況多半不錯；4–6 分中等，是最常見的範圍，偶爾會累但大致正常；7–9 分偏高，白天嗜睡感較明顯，可能已經影響專注力；10–12 分最高，建議留意整體睡眠量是否足夠，若持續嗜睡可考慮諮詢睡眠專科。"],
+      ["模型自然睡眠週期", "假設完全不受鬧鐘、日夜節律等外部提示干擾，純粹依你的睡眠壓力參數，模型推算出身體會自然形成的睡／醒週期長度。「睡」是自然會睡多久、「醒」是自然會醒多久，兩者相加是「週期」。這個週期不一定剛好等於 24 小時，因為這是理論值、不是你實際的日夜作息，差異大小不代表有問題，只是反映模型參數的特性，可以當作參考指標。"],
     ];
     el.appendChild(buildAccordion(items));
   }
 
   // ------------------------------------------------------------------
-  function drawChart(result, nowClock) {
+  function drawChart(result, nowClock, nowDate) {
     const canvas = document.getElementById("chart");
     const ctx = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
@@ -372,11 +375,31 @@
       ctx.fillText(v.toFixed(1), padL - 8, y);
       ctx.strokeStyle = "#eee"; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + plotW, y); ctx.stroke();
     }
-    ctx.textAlign = "center"; ctx.textBaseline = "top";
-    for (let t = 0; t <= tMax + 0.001; t += 6) {
-      const x = xPix(t); ctx.fillStyle = "#333"; ctx.fillText(t.toFixed(0), x, padT + plotH + 8);
+    // Day-boundary markers (light vertical line + date label) so repeated
+    // clock times across the 48h span (e.g. two 15:00's) aren't ambiguous.
+    if (nowDate) {
+      const firstBoundary = (24 - (nowClock % 24)) % 24 || 24;
+      for (let t = firstBoundary; t <= tMax + 0.001; t += 24) {
+        const x = xPix(t);
+        ctx.strokeStyle = "#ccc"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
+        ctx.setLineDash([]);
+        const dAt = new Date(nowDate.getTime() + t * 3600 * 1000);
+        const dateLabel = (dAt.getMonth() + 1) + "/" + dAt.getDate();
+        ctx.fillStyle = "#999"; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.fillText(dateLabel, x, padT - 4);
+      }
     }
-    ctx.fillText("距離現在的時間（小時）", padL + plotW / 2, padT + plotH + 26);
+
+    // X-axis ticks: actual clock time (HH:MM), not "hours from now" -- easier
+    // to read at a glance without mental math.
+    ctx.font = "12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (let t = 0; t <= tMax + 0.001; t += 6) {
+      const x = xPix(t);
+      const label = fmtClock(nowClock + t);
+      ctx.fillStyle = "#333"; ctx.fillText(label, x, padT + plotH + 8);
+    }
+    ctx.fillText("實際時間（每 6 小時標示，虛線為換日）", padL + plotW / 2, padT + plotH + 26);
 
     ctx.save(); ctx.translate(14, padT + plotH / 2); ctx.rotate(-Math.PI / 2);
     ctx.textAlign = "center"; ctx.fillText("非因次化睡眠壓力 (0-1)", 0, 0); ctx.restore();
