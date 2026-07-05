@@ -39,9 +39,25 @@ button{
 button.secondary{background:#eef1f5; color:var(--ink); font-weight:500;}
 button.ghost{background:#fff; color:var(--accent); border:1px solid var(--accent);}
 button:disabled{opacity:0.5; cursor:not-allowed;}
-dl.report-list{display:grid; grid-template-columns:220px 1fr; gap:6px 14px; margin:10px 0;}
-dl.report-list dt{color:var(--sub); font-size:0.85rem; padding-top:2px;}
-dl.report-list dd{margin:0; font-weight:600;}
+.accordion{border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:10px 0;}
+.accordion details{border-bottom:1px solid var(--line);}
+.accordion details:last-child{border-bottom:none;}
+.accordion summary{
+  cursor:pointer; padding:11px 14px; font-size:0.9rem; color:var(--ink);
+  list-style:none; display:flex; justify-content:space-between; align-items:center;
+  gap:10px; user-select:none; background:#fafbfc;
+}
+.accordion summary::-webkit-details-marker{display:none;}
+.accordion summary::after{
+  content:"›"; flex:none; font-size:1.2rem; color:var(--sub); line-height:1;
+  transform:rotate(90deg); transition:transform .15s ease;
+}
+.accordion details[open] summary{background:#fff; border-bottom:1px solid var(--line);}
+.accordion details[open] summary::after{transform:rotate(-90deg);}
+.accordion .acc-body{
+  padding:10px 14px 14px; font-weight:600; color:var(--ink); font-size:0.95rem;
+  line-height:1.6; white-space:normal; word-break:break-word;
+}
 .tag{display:inline-block; padding:2px 10px; border-radius:999px; font-size:0.78rem; font-weight:700; margin-left:6px;}
 .tag.green{background:var(--greenBg); color:var(--green);}
 .tag.yellow{background:var(--yellowBg); color:var(--yellow);}
@@ -59,6 +75,7 @@ dl.report-list dd{margin:0; font-weight:600;}
 canvas{max-width:100%; border-radius:10px; background:#fff;}
 ol{padding-left:20px; font-size:0.88rem; color:var(--sub);}
 footer{text-align:center; color:var(--sub); font-size:0.82rem; padding:20px;}
+footer .source-note{max-width:640px; margin:6px auto 0; text-align:right; font-size:0.7rem; color:#9aa2ad; line-height:1.5;}
 .qa-list{font-size:0.9rem;}
 .qa-list div{display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px dashed var(--line);}
 .qa-list div span:first-child{color:var(--sub);}

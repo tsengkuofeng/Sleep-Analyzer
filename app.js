@@ -53,6 +53,27 @@
     return Math.max(0, Math.min(100, ((s - hMinus) / (hPlus - hMinus)) * 100));
   }
 
+  // Builds a collapsible accordion from an array of [label, value] pairs.
+  // Each row starts collapsed; click the row (summary) to expand/collapse
+  // independently. Used for the report data list and the glossary so long
+  // values never get squeezed into a narrow fixed-width column.
+  function buildAccordion(items) {
+    const acc = document.createElement("div");
+    acc.className = "accordion";
+    items.forEach(([label, value]) => {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = label;
+      const body = document.createElement("div");
+      body.className = "acc-body";
+      body.textContent = value;
+      details.appendChild(summary);
+      details.appendChild(body);
+      acc.appendChild(details);
+    });
+    return acc;
+  }
+
   // ---- Exercise zone classification --------------------------------
   // gap = hours until the next predicted sleep onset. Thresholds follow
   // Leota et al. 2025 (2-h exercise-timing bins relative to habitual sleep
@@ -229,7 +250,7 @@
       riskEl.appendChild(box2);
     }
 
-    // ---- Report list ----
+    // ---- Report list (collapsible accordion) ----
     const lines = [
       ["目前時間（即時）", fmtClock(derived.nowClock)],
       ["目前睡意指數", idx.toFixed(0) + " / 100（0=剛睡飽，100=已達模型入睡閾值）"],
@@ -245,14 +266,7 @@
       ["昨晚睡眠負債", sleepDebt.toFixed(1) + " 小時（相對目標睡眠時數）"],
       ["模型自然睡眠週期", "睡 " + derived.tSleepNat.toFixed(1) + " h + 醒 " + derived.tWakeNat.toFixed(1) + " h = 週期 " + derived.tNat.toFixed(1) + " h"],
     ];
-    const dl = document.createElement("dl");
-    dl.className = "report-list";
-    lines.forEach(([k, v]) => {
-      const dt = document.createElement("dt"); dt.textContent = k;
-      const dd = document.createElement("dd"); dd.textContent = v;
-      dl.appendChild(dt); dl.appendChild(dd);
-    });
-    reportEl.appendChild(dl);
+    reportEl.appendChild(buildAccordion(lines));
 
     drawChart(result, derived.nowClock);
     renderExerciseAdvice(a);
@@ -304,18 +318,17 @@
 
   function renderGlossary() {
     const el = document.getElementById("glossary");
-    el.innerHTML = `
-      <dl class="report-list">
-        <dt>S(t) 睡眠壓力 (Process S)</dt><dd>清醒期間持續累積、睡眠期間逐漸清除的「恆定壓力」，白話講就是「累積的睏意」。</dd>
-        <dt>H+ 上閾值</dt><dd>睡眠壓力達到此線就會自然想睡（入睡閾值），此線隨晝夜節律上下擺動，晚間最高（不易入睡），凌晨前後最低（易入睡）。</dd>
-        <dt>H− 下閾值</dt><dd>睡眠壓力降到此線以下就會自然醒來（起床閾值），同樣隨晝夜節律擺動。</dd>
-        <dt>清醒努力 (Wake Effort)</dt><dd>若鬧鐘把你在 S 尚未降到 H− 之前就叫醒，代表身體本來還想睡，醒著需要額外「努力」維持清醒，這段時間專注力與反應會比平常差。</dd>
-        <dt>社交時差 (Social Jetlag)</dt><dd>平常因為上班上課等社會作息、被迫起床時間，和你身體真正偏好的起床時間之間的落差，落差越大代表越「時差」。</dd>
-        <dt>睡眠效率 (SE)</dt><dd>實際睡著時間 ÷ 躺在床上的總時間；數字越低代表翻來覆去、半夜清醒的比例越高。</dd>
-        <dt>睡眠負債</dt><dd>目標睡眠時數與實際睡眠時數的差距，長期累積會讓睡眠壓力基準線持續墊高。</dd>
-        <dt>SUCRA</dt><dd>網絡統合分析中用來排序「哪種介入方式效果最好」的綜合分數，數值越高代表在所有比較方案中排名越前面。</dd>
-      </dl>
-    `;
+    el.innerHTML = "";
+    const items = [
+      ["S(t) 睡眠壓力 (Process S)", "清醒期間持續累積、睡眠期間逐漸清除的「恆定壓力」，白話講就是「累積的睏意」。"],
+      ["H+ 上閾值", "睡眠壓力達到此線就會自然想睡（入睡閾值），此線隨晝夜節律上下擺動，晚間最高（不易入睡），凌晨前後最低（易入睡）。"],
+      ["H− 下閾值", "睡眠壓力降到此線以下就會自然醒來（起床閾值），同樣隨晝夜節律擺動。"],
+      ["清醒努力 (Wake Effort)", "若鬧鐘把你在 S 尚未降到 H− 之前就叫醒，代表身體本來還想睡，醒著需要額外「努力」維持清醒，這段時間專注力與反應會比平常差。"],
+      ["社交時差 (Social Jetlag)", "平常因為上班上課等社會作息、被迫起床時間，和你身體真正偏好的起床時間之間的落差，落差越大代表越「時差」。"],
+      ["睡眠效率 (SE)", "實際睡著時間 ÷ 躺在床上的總時間；數字越低代表翻來覆去、半夜清醒的比例越高。"],
+      ["睡眠負債", "目標睡眠時數與實際睡眠時數的差距，長期累積會讓睡眠壓力基準線持續墊高。"],
+    ];
+    el.appendChild(buildAccordion(items));
   }
 
   // ------------------------------------------------------------------
