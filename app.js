@@ -284,7 +284,7 @@
     const rankBox = document.createElement("div");
     rankBox.className = "info-box";
     rankBox.innerHTML = `
-      <h4>黃金處方</h4>
+      <h4>運動建議</h4>
       <p>研究顯示，阻力+有氧一起做，改善睡眠品質的效果優於只做單一種類；單次運動抓「高強度、≤30 分鐘」就好，效果比 40–55 分鐘的中長時間訓練更好。</p>
       <p>你目前偏好「${typeLabel[inputs.exerciseType]}」。${inputs.exerciseType !== "combined" ? "可以考慮改成阻力+有氧一起做，效果會更好。" : "已經是建議的組合。"}</p>
     `;
