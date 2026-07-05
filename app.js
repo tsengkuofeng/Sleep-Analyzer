@@ -2,24 +2,18 @@
  * app.js
  *
  * UI logic for the browser-based sleep + exercise-timing analyzer. Reads
- * the extended questionnaire, runs the two-process model (model.js),
- * renders the Q&A + report + 48h chart, generates exercise-timing and
- * acute-risk advice, and exports everything to a 2-section PDF via jsPDF.
+ * the extended questionnaire, runs the two-process model (model.js), and
+ * renders the Q&A + report + 48h chart + exercise-timing advice.
  *
  * SOURCING NOTE:
  * - Two-process model math: Borbély & Daan 1984; Skeldon & Dijk 2025 (see
  *   model.js header). The "wake effort" concept is taken directly from
  *   Skeldon & Dijk's terminology.
- * - Exercise type/intensity/duration SUCRA rankings: Li et al., Front
- *   Psychol 2024;15:1466277.
+ * - Exercise type/duration guidance: Li et al., Front Psychol 2024;15:1466277.
  * - Exercise-timing "yellow zone" delay (~36 min) and autonomic effects:
  *   Leota et al., Nat Commun 2025.
  * - "Red zone" bedtime heart-rate elevation (>=20 bpm) and SOL/SE effects:
  *   Stutz, Eiholzer & Spengler, Sports Med 2019;49:269-287.
- * - Amygdala/prefrontal-cortex acute risk warnings: general sleep-
- *   deprivation neuroscience literature (e.g. Yoo et al. 2007, Curr Biol;
- *   Killgore 2010, Prog Brain Res) -- NOT from the three exercise/sleep
- *   PDFs above; flagged separately in the UI.
  * - Age-amplitude adjustment, ESS wake-gain adjustment, SE-based clearance
  *   adjustment: engineering DESIGN CHOICES documented in model.js, not
  *   coefficients taken from any cited paper.
@@ -28,7 +22,7 @@
 (function () {
   "use strict";
   const M = window.TwoProcessModel;
-  let lastAnalysis = null; // cached for PDF export
+  let lastAnalysis = null;
 
   // ------------------------------------------------------------------
   // Helpers
@@ -125,7 +119,6 @@
     const sleepLatencyMin = readFloat("sleepLatency", 20);
     const awakenings = readFloat("awakenings", 1);
     const exerciseType = document.getElementById("exerciseType").value;
-    const exerciseIntensity = document.getElementById("exerciseIntensity").value;
 
     const socialJetlag = wrapDiff(habitualWake, preferredWake); // + = wakes earlier than true preference
     const circadianMinTime = ((preferredWake - 2.0) % 24 + 24) % 24;
@@ -164,7 +157,7 @@
 
     lastAnalysis = {
       inputs: { age, desiredSleep, habitualWake, preferredWake, actualWakeToday, actualSleepHours,
-                ess, essScore, sleepLatencyMin, awakenings, exerciseType, exerciseIntensity },
+                ess, essScore, sleepLatencyMin, awakenings, exerciseType },
       derived: { socialJetlag, circadianMinTime, sleepEfficiency, wakeEffort, nowClock, sNow,
                  essMax, tSleepNat, tWakeNat, tNat, ageAmplitudeFactor: params.ageAmplitudeFactor },
       result,
@@ -194,8 +187,7 @@
       ["ESS 總分", a.inputs.essScore + " / " + a.derived.essMax],
       ["昨晚入睡花費時間", a.inputs.sleepLatencyMin + " 分鐘"],
       ["半夜醒來次數", a.inputs.awakenings + " 次"],
-      ["偏好運動類型", { combined: "結合訓練（有氧＋阻力）", resistance: "阻力訓練", aerobic: "有氧運動" }[a.inputs.exerciseType]],
-      ["偏好運動強度", { high: "高強度", moderate: "中強度", light: "輕強度" }[a.inputs.exerciseIntensity]],
+      ["偏好運動類型", { combined: "阻力+有氧", resistance: "阻力訓練", aerobic: "有氧運動" }[a.inputs.exerciseType]],
     ];
     rows.forEach(([k, v]) => {
       const div = document.createElement("div");
@@ -227,18 +219,6 @@
     // ---- Risk warnings ----
     const riskEl = document.getElementById("riskWarnings");
     riskEl.innerHTML = "";
-    const triggerRisk = sleepDebt >= 1.5 || derived.sleepEfficiency < 0.85 || derived.wakeEffort || idx >= 70;
-    if (triggerRisk) {
-      const box = document.createElement("div");
-      box.innerHTML = `
-        <div class="risk-box">
-          <h4>⚠ 48 小時急性風險預警</h4>
-          <p><strong>情緒調節障礙：</strong>睡眠壓力偏高可能使杏仁核對負面訊息的反應過度放大，這 48 小時內較容易對他人言語或情境產生超乎比例的情緒反應。</p>
-          <p><strong>執行功能閃失：</strong>前額葉皮質對睡眠不足較敏感，注意力容易出現「閃失」（micro-lapse），決策也會更傾向冒險與追求即時獎勵，重要決定建議延後或找人覆核。</p>
-          <p class="disclaimer">此段警示屬於一般睡眠剝奪神經科學文獻的常見發現（非本次上傳的三篇運動／睡眠文獻的結論），僅供留意，非診斷。</p>
-        </div>`;
-      riskEl.appendChild(box);
-    }
     if (derived.wakeEffort) {
       const box2 = document.createElement("div");
       box2.innerHTML = `
@@ -285,18 +265,14 @@
     const el = document.getElementById("exerciseAdvice");
     el.innerHTML = "";
 
-    const typeLabel = { combined: "結合訓練（有氧＋阻力）", resistance: "阻力訓練", aerobic: "有氧運動" };
-    const sucra = { combined: 82.7, resistance: 67.2, aerobic: 48.8 };
-    const intensitySucra = { high: 92.9, moderate: 81.8, light: 53.0 };
+    const typeLabel = { combined: "阻力+有氧", resistance: "阻力訓練", aerobic: "有氧運動" };
 
     const rankBox = document.createElement("div");
     rankBox.className = "info-box";
     rankBox.innerHTML = `
-      <h4>黃金處方（Li et al., 2024 網絡統合分析）</h4>
-      <p>就改善睡眠品質而言，各類型運動效果排名：結合訓練 (SUCRA=82.7) &gt; 阻力訓練 (SUCRA=67.2) &gt; 有氧運動 (SUCRA=48.8)；
-      強度排名：高強度 (SUCRA=92.9) &gt; 中強度 (SUCRA=81.8) &gt; 低強度 (SUCRA=53.0)；單次時長以 ≤30 分鐘效果最佳 (SUCRA=92.2)，優於 40–55 分鐘。</p>
-      <p>你目前偏好「${typeLabel[inputs.exerciseType]}」（SUCRA=${sucra[inputs.exerciseType]}）、「${{ high: "高強度", moderate: "中強度", light: "輕強度" }[inputs.exerciseIntensity]}」（SUCRA=${intensitySucra[inputs.exerciseIntensity]}）。
-      ${inputs.exerciseType !== "combined" ? "文獻建議可考慮改為結合訓練以取得更佳效果。" : "與文獻最佳處方一致。"}</p>
+      <h4>黃金處方</h4>
+      <p>研究顯示，阻力+有氧一起做，改善睡眠品質的效果優於只做單一種類；單次運動抓「高強度、≤30 分鐘」就好，效果比 40–55 分鐘的中長時間訓練更好。</p>
+      <p>你目前偏好「${typeLabel[inputs.exerciseType]}」。${inputs.exerciseType !== "combined" ? "可以考慮改成阻力+有氧一起做，效果會更好。" : "已經是建議的組合。"}</p>
     `;
     el.appendChild(rankBox);
 
@@ -306,7 +282,7 @@
       box.className = "exercise-window green";
       box.innerHTML = `<strong>建議運動時段：${fmtClock(green.start)} – ${fmtClock(green.end)}</strong>
         <span class="tag green">全綠燈區</span>
-        <p style="margin:8px 0 0">此時段距離預測入睡時間 &gt; 4 小時，依 Leota et al. (2025) 的安全窗數據，此時進行高強度結合訓練不會干擾今晚睡眠。</p>`;
+        <p style="margin:8px 0 0">此時段距離預測入睡時間 &gt; 4 小時，這時候做高強度運動不會干擾今晚睡眠。</p>`;
       el.appendChild(box);
     } else {
       el.innerHTML += `<p class="disclaimer">未來 48 小時內找不到明顯的綠燈運動時段，建議優先安排在起床後不久、距離下次預測入睡 4 小時以上的時間。</p>`;
@@ -439,81 +415,10 @@
     document.getElementById("sleepLatency").value = "35";
     document.getElementById("awakenings").value = "2";
     document.getElementById("exerciseType").value = "aerobic";
-    document.getElementById("exerciseIntensity").value = "high";
-  }
-
-  // ---- PDF export: Section 1 = Q&A, Section 2 = report + analysis ----
-  function downloadPdf() {
-    if (!lastAnalysis) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const marginL = 40; let y = 50;
-    const pageH = doc.internal.pageSize.getHeight();
-    const pageW = doc.internal.pageSize.getWidth();
-
-    function ensureSpace(needed) { if (y + needed > pageH - 40) { doc.addPage(); y = 50; } }
-    function heading(text) {
-      ensureSpace(30);
-      doc.setFontSize(15); doc.setFont(undefined, "bold");
-      doc.text(text, marginL, y); y += 22;
-      doc.setFont(undefined, "normal"); doc.setFontSize(10.5);
-    }
-    function line(text) {
-      const wrapped = doc.splitTextToSize(text, pageW - marginL * 2);
-      wrapped.forEach(l => { ensureSpace(16); doc.text(l, marginL, y); y += 15; });
-    }
-
-    // ---- Section 1: Q&A ----
-    heading("第一部分：問題與回答");
-    document.querySelectorAll("#qaList > div").forEach(div => {
-      const spans = div.querySelectorAll("span");
-      line(spans[0].textContent + "： " + spans[1].textContent);
-    });
-
-    // ---- Section 2: Report & analysis ----
-    doc.addPage(); y = 50;
-    heading("第二部分：分析報表與解析");
-
-    const riskBoxes = document.querySelectorAll("#riskWarnings .risk-box");
-    if (riskBoxes.length) {
-      line("【急性風險預警】");
-      riskBoxes.forEach(box => { box.querySelectorAll("h4, p").forEach(node => line(node.textContent)); y += 4; });
-    }
-
-    line("【核心數據】");
-    document.querySelectorAll("#report dl.report-list dt").forEach((dt, i) => {
-      const dd = document.querySelectorAll("#report dl.report-list dd")[i];
-      line(dt.textContent + "： " + dd.textContent);
-    });
-
-    ensureSpace(20); y += 10;
-    line("【48 小時睡眠壓力與運動時機圖】");
-    const canvas = document.getElementById("chart");
-    const imgData = canvas.toDataURL("image/png");
-    const imgW = pageW - marginL * 2;
-    const imgH = imgW * (canvas.height / canvas.width);
-    ensureSpace(imgH + 10);
-    doc.addImage(imgData, "PNG", marginL, y, imgW, imgH);
-    y += imgH + 16;
-
-    doc.addPage(); y = 50;
-    line("【運動時機建議與黃金處方】");
-    document.querySelectorAll("#exerciseAdvice h4, #exerciseAdvice p, #exerciseAdvice strong").forEach(node => {
-      if (node.tagName === "STRONG" && node.parentElement.tagName !== "P") line(node.textContent);
-      else if (node.tagName !== "STRONG") line(node.textContent);
-    });
-
-    y += 10;
-    line("【變項意義與白話文解釋】");
-    const dts = document.querySelectorAll("#glossary dt"), dds = document.querySelectorAll("#glossary dd");
-    dts.forEach((dt, i) => line(dt.textContent + "： " + dds[i].textContent));
-
-    doc.save("睡眠與運動時機分析報告.pdf");
   }
 
   window.addEventListener("DOMContentLoaded", function () {
     document.getElementById("analyzeBtn").addEventListener("click", analyze);
     document.getElementById("demoBtn").addEventListener("click", function () { fillDemoValues(); analyze(); });
-    document.getElementById("downloadPdfBtn").addEventListener("click", downloadPdf);
   });
 })();
