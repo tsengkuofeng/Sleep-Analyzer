@@ -3,86 +3,149 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>睡眠分析器  | Two-Process Model Sleep Analyzer</title>
+<title>睡眠與運動時機分析器 | Two-Process Model + Exercise Timing</title>
 <link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
   <header>
-    <h1>睡眠分析器</h1>
-    <p class="subtitle">基於 Borbély 雙歷程模型 (Two-Process Model of Sleep Regulation)</p>
+    <h1>睡眠與運動時機分析器</h1>
+    <p class="subtitle">雙歷程模型 (Two-Process Model) × 48 小時睡眠壓力預測 × 運動時機建議</p>
   </header>
 
   <main>
+
     <section class="card">
-      <h2>1. 回答幾個簡單問題</h2>
-      <form id="sleepForm" onsubmit="return false;">
-        <label>
-          你平常大約幾點起床？（用來估計你的生理時鐘相位）
+      <h2>1. 基本資料</h2>
+      <div class="row2">
+        <label>年齡
+          <input type="number" id="age" value="30" min="10" max="100" step="1" />
+          <span class="hint">用於調整晝夜節律振幅（年齡越大，振幅越低，睡眠越易碎片化）</span>
+        </label>
+        <label>你希望的目標睡眠時數（小時）
+          <input type="number" id="desiredSleep" value="8" step="0.5" min="4" max="12" />
+        </label>
+      </div>
+
+      <div class="group-label">① 生理時鐘相位校準（區分社交時差與真實時型）</div>
+      <div class="row2">
+        <label>你平常幾點起床？（社交時間表）
           <input type="time" id="habitualWake" value="07:00" />
         </label>
-
-        <label>
-          你今天實際幾點起床？
-          <input type="time" id="todayWakeTime" value="07:00" />
+        <label>若完全自由選擇，你偏好幾點起床？（真實時型）
+          <input type="time" id="preferredWake" value="08:00" />
         </label>
+      </div>
 
-        <label>
-          今天已經清醒了幾個小時（自動計算，依「今天實際起床時間」與現在時間推算）
-          <input type="number" id="hoursAwakeNow" value="0" step="0.1" readonly />
+      <div class="group-label">② 睡眠壓力初始狀態</div>
+      <div class="row2">
+        <label>今天實際起床時間？
+          <input type="time" id="actualWakeToday" value="07:00" />
         </label>
-
-        <label>
-          最近幾天平均實際睡眠時數大約是幾小時？
-          <input type="number" id="recentAvgSleep" value="6.5" step="0.5" min="0" max="14" />
+        <label>昨晚實際睡了幾小時？
+          <input type="number" id="actualSleepHours" value="6.5" step="0.25" min="0" max="14" />
         </label>
+      </div>
 
-        <label>
-          你希望的目標睡眠時數是幾小時？
-          <input type="number" id="desiredSleep" value="8" step="0.5" min="0" max="14" />
+      <div class="group-label">③ 主觀嗜睡度校準（簡約版 Epworth 嗜睡量表 ESS）</div>
+      <p class="group-desc">請針對以下情境評估「打瞌睡」的機率：0=從不、1=偶爾、2=時常、3=幾乎一定</p>
+      <div class="row2">
+        <label>坐著閱讀時
+          <select id="ess1"><option value="0">0 - 從不</option><option value="1">1 - 偶爾</option><option value="2" selected>2 - 時常</option><option value="3">3 - 幾乎一定</option></select>
         </label>
-
-        <label class="checkbox-row">
-          <input type="checkbox" id="wantExercise" checked />
-          需要順便給運動時機建議
+        <label>看電視時
+          <select id="ess2"><option value="0">0 - 從不</option><option value="1">1 - 偶爾</option><option value="2" selected>2 - 時常</option><option value="3">3 - 幾乎一定</option></select>
         </label>
+        <label>在公共場所安靜坐著（如會議、劇院）
+          <select id="ess3"><option value="0">0 - 從不</option><option value="1" selected>1 - 偶爾</option><option value="2">2 - 時常</option><option value="3">3 - 幾乎一定</option></select>
+        </label>
+        <label>當乘客坐車超過一小時、中途沒有休息時
+          <select id="ess4"><option value="0">0 - 從不</option><option value="1" selected>1 - 偶爾</option><option value="2">2 - 時常</option><option value="3">3 - 幾乎一定</option></select>
+        </label>
+      </div>
 
-        <div class="button-row">
-          <button type="button" id="analyzeBtn">開始分析</button>
-          <button type="button" id="demoBtn" class="secondary">使用範例資料</button>
-        </div>
-      </form>
+      <div class="group-label">④ 即時睡眠質量數據</div>
+      <div class="row2">
+        <label>昨晚入睡花多久時間？（分鐘）
+          <input type="number" id="sleepLatency" value="20" step="1" min="0" max="180" />
+        </label>
+        <label>半夜醒來幾次？
+          <input type="number" id="awakenings" value="1" step="1" min="0" max="15" />
+        </label>
+      </div>
+
+      <div class="group-label">⑤ 運動類型與強度偏好</div>
+      <label>你偏好的運動類型
+        <select id="exerciseType">
+          <option value="combined" selected>結合訓練（有氧＋阻力）</option>
+          <option value="resistance">阻力訓練</option>
+          <option value="aerobic">有氧運動</option>
+        </select>
+      </label>
+      <label>你偏好的運動強度
+        <select id="exerciseIntensity">
+          <option value="high" selected>高強度</option>
+          <option value="moderate">中強度</option>
+          <option value="light">輕強度</option>
+        </select>
+      </label>
+
+      <div class="button-row">
+        <button type="button" id="analyzeBtn">開始分析</button>
+        <button type="button" id="demoBtn" class="secondary">使用範例資料</button>
+      </div>
     </section>
 
     <section class="card" id="resultsSection" hidden>
-      <h2>2. 分析結果</h2>
+      <h2>2. 問題與回答</h2>
+      <div id="qaList" class="qa-list"></div>
+    </section>
+
+    <section class="card" id="reportSection" hidden>
+      <h2>3. 分析報表與解析</h2>
+      <div id="riskWarnings"></div>
       <div id="report"></div>
 
-      <h2>3. 未來 48 小時睡眠壓力模擬</h2>
-      <canvas id="chart" width="900" height="440"></canvas>
+      <h3>未來 48 小時睡眠壓力與運動時機模擬</h3>
+      <div class="legend-row">
+        <span><span class="legend-swatch" style="background:var(--greenBg);border:1px solid var(--green)"></span>綠燈：距入睡 &gt; 4 小時，適合高強度結合訓練</span>
+        <span><span class="legend-swatch" style="background:var(--yellowBg);border:1px solid var(--yellow)"></span>黃燈：距入睡 2–4 小時，建議中/輕度負荷</span>
+        <span><span class="legend-swatch" style="background:var(--redBg);border:1px solid var(--red)"></span>紅燈：距入睡 &lt; 2 小時，禁止高強度運動</span>
+        <span><span class="legend-swatch" style="background:rgba(120,120,120,0.3)"></span>灰色：預測睡眠期間</span>
+      </div>
+      <canvas id="chart" width="900" height="460"></canvas>
+
+      <h3>運動時機建議</h3>
+      <div id="exerciseAdvice"></div>
+
+      <h3>變項意義與白話文解釋</h3>
+      <div id="glossary"></div>
+
+      <div class="button-row">
+        <button type="button" id="downloadPdfBtn" class="ghost">下載完整 PDF 報表</button>
+      </div>
     </section>
 
     <section class="card sources">
       <h2>模型與資料來源</h2>
-      <p>
-        Process S（恆定睡眠壓力）與 Process C（生理時鐘）的方程式與標準參數，直接取自：
-      </p>
       <ol>
         <li>Borbély AA. A two process model of sleep regulation. <em>Hum Neurobiol.</em> 1982;1(3):195-204.</li>
-        <li>Borbély AA. The two-process model of sleep regulation: beginnings and outlook. <em>J Sleep Res.</em> 2022;31(4):e13598.</li>
-        <li>Skeldon AC, Dijk DJ. The complexity and commonness of the two-process model of sleep regulation from a mathematical perspective. <em>npj Biol Timing Sleep.</em> 2025;2:24. doi:
-          <a href="https://doi.org/10.1038/s44323-025-00039-z" target="_blank" rel="noopener">10.1038/s44323-025-00039-z</a>
-        </li>
+        <li>Daan S, Beersma DGM, Borbély AA. Timing of human sleep: recovery process gated by a circadian pacemaker. <em>Am J Physiol.</em> 1984;246(2):R161-83.</li>
+        <li>Skeldon AC, Dijk DJ. The complexity and commonness of the two-process model of sleep regulation from a mathematical perspective, including the "wake effort" concept for early forced waking. <em>npj Biol Timing Sleep.</em> 2025;2:24.</li>
+        <li>Li Y, Wang W, Wang W, et al. Effects of different exercise prescriptions on sleep quality: a systematic review and network meta-analysis (SUCRA rankings for type/intensity/duration/frequency/period). <em>Front Psychol.</em> 2024;15:1466277.</li>
+        <li>Leota J, Presby DM, Le F, Czeisler MÉ, Facer-Childs ER, et al. Exercise timing, strain and nocturnal autonomic activity in free-living conditions. <em>Nat Commun.</em> 2025.</li>
+        <li>Stutz J, Eiholzer R, Spengler CM. Effects of evening exercise on sleep in healthy participants: a systematic review and meta-analysis. <em>Sports Med.</em> 2019;49:269-287.</li>
       </ol>
       <p class="disclaimer">
-        「建議運動時機」是本工具在模型輸出上額外設計的延伸推論，<strong>不是</strong>上述論文的結論，也不是經過驗證的運動生理學建議，僅供參考。
-        本工具為教育與自我觀察用途，不是醫療器材，不能取代睡眠專科醫師的診斷或建議。
+        情緒／認知急性風險警示（杏仁核反應性、前額葉皮質敏感性）取材自一般睡眠剝奪神經科學文獻（如 Yoo et al., 2007, <em>Curr Biol</em>；Killgore, 2010, <em>Prog Brain Res</em>），並非來自上述六篇論文本身，於報表中會另行標註。
+      </p>
+      <p class="disclaimer">
+        年齡對晝夜節律振幅的調整公式、ESS 對清醒斜率的調整、睡眠效率對清除速率的調整，皆為本工具在模型輸出上額外設計的工程延伸，<strong>非</strong>直接取自上述論文的量化係數，僅供自我觀察參考，不能取代睡眠專科醫師的診斷或建議。
       </p>
     </section>
   </main>
 
-  <footer>
-    <p>Two-Process Model Sleep Analyzer &middot; MIT License</p>
-  </footer>
+  <footer>睡眠與運動時機分析器 &middot; 教育與自我觀察用途，非醫療器材</footer>
 
   <script src="model.js"></script>
   <script src="app.js"></script>
