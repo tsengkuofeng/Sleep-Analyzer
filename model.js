@@ -1,21 +1,22 @@
 /*
  * model.js
- * Two-process model of sleep regulation (Borbély & Daan 1984; Skeldon & Dijk,
- * npj Biol Timing Sleep 2025) core math, plus documented extensions for:
+ * Two-process model of sleep regulation (Borbély & Daan 1984 [1,2]; Skeldon &
+ * Dijk, npj Biol Timing Sleep 2025 [3]) core math, plus documented extensions
+ * for:
  *   - chronotype / social-jetlag phase setting
  *   - sleep-efficiency-adjusted clearance rate
  *   - ESS-adjusted wake-pressure gain
- *   - age-adjusted circadian amplitude
- *   - "wake effort" (forced early waking) detection
+ *   - "wake effort" (forced early waking) detection [3]
  *
+ * Reference numbers [n] match the numbered list at the bottom of index.html.
  * Anything NOT taken directly from the cited papers is explicitly labelled
  * DESIGN CHOICE in a comment, so you can tell model fact from engineering
  * heuristic at a glance.
  *
  * Standard parameter set source: Skeldon AC, Dijk DJ. npj Biol Timing Sleep
- * 2025;2:24. (illustrative parameter set reproducing Borbély 1982 / Daan,
- * Beersma & Borbély 1984): chi_s=4.2h, chi_w=18.2h, H+0=0.67, H-0=0.17,
- * a=0.12, mu=1.
+ * 2025;2:24 [3]. (illustrative parameter set reproducing Borbély 1982 [1] /
+ * Daan, Beersma & Borbély 1984 [2]): chi_s=4.2h, chi_w=18.2h, H+0=0.67,
+ * H-0=0.17, a=0.12, mu=1.
  */
 
 (function (root) {
@@ -27,24 +28,12 @@
       chiW: 18.2, // homeostatic time constant, wake (h)
       hPlus0: 0.67, // mean upper (sleep-onset) threshold
       hMinus0: 0.17, // mean lower (wake) threshold
-      a: 0.12, // circadian amplitude (baseline, young adult)
+      a: 0.12, // circadian amplitude
       mu: 1.0, // upper asymptote of S during wake
       circadianMinTime: 5.0, // clock hour of circadian minimum (approx. core body temp nadir)
-      ageAmplitudeFactor: 1.0, // multiplies `a`; set via ageAmplitudeFactor()
       wakeGainMultiplier: 1.0, // multiplies wake-phase S growth; set via essGainMultiplier()
       sleepClearanceDivisor: 1.0, // divides sleep-phase decay rate (>1 = slower clearance)
     };
-  }
-
-  // DESIGN CHOICE: circadian amplitude declines with age. The direction is
-  // well documented in chronobiology (reduced circadian amplitude and more
-  // fragmented sleep in older adults), but this specific linear formula is
-  // an engineering approximation for this app, NOT a coefficient taken from
-  // Skeldon & Dijk (2025) or Borbély & Daan (1984).
-  function ageAmplitudeFactor(age) {
-    if (!isFinite(age) || age <= 25) return 1.0;
-    const factor = 1.0 - 0.006 * (age - 25);
-    return Math.max(0.55, Math.min(1.05, factor));
   }
 
   // DESIGN CHOICE: higher subjective daytime sleepiness (mini-ESS) nudges up
@@ -69,9 +58,8 @@
   // (core-body-temperature nadir -> easiest to wake / hardest to stay
   // asleep), maximum ~12h later (the evening "wake maintenance zone").
   function circadianModulation(t, params) {
-    const a = params.a * params.ageAmplitudeFactor;
     const phasePeak = params.circadianMinTime + 12;
-    return a * Math.cos((2 * Math.PI * (t - phasePeak)) / 24);
+    return params.a * Math.cos((2 * Math.PI * (t - phasePeak)) / 24);
   }
   function upperThreshold(t, params) { return params.hPlus0 + circadianModulation(t, params); }
   function lowerThreshold(t, params) { return params.hMinus0 + circadianModulation(t, params); }
@@ -121,7 +109,7 @@
   }
 
   root.TwoProcessModel = {
-    defaultParams, ageAmplitudeFactor, essGainMultiplier, sleepClearanceDivisor,
+    defaultParams, essGainMultiplier, sleepClearanceDivisor,
     circadianModulation, upperThreshold, lowerThreshold, sDuringWake, sDuringSleep,
     simulate, naturalPeriod,
   };
