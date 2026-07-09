@@ -32,11 +32,11 @@
 
       <div class="group-label">② 睡眠壓力初始狀態 [1,2,3]</div>
       <div class="row2">
+        <label>昨晚上床時間？
+          <input type="time" id="bedtime" value="23:00" />
+        </label>
         <label>今天實際起床時間？
           <input type="time" id="actualWakeToday" value="07:00" />
-        </label>
-        <label>昨晚實際睡了幾小時？
-          <input type="number" id="actualSleepHours" value="6.5" step="0.25" min="0" max="14" />
         </label>
       </div>
 
@@ -58,6 +58,7 @@
       </div>
 
       <div class="group-label">④ 即時睡眠質量數據（睡眠效率 [8]）</div>
+      <p class="group-desc">實際睡眠時數與睡眠效率會用「起床時間 − 上床時間 − 入睡花費時間 − 半夜清醒時間」自動算出，不需要自己估算睡了幾小時。</p>
       <div class="row2">
         <label>昨晚入睡花多久時間？（分鐘）
           <input type="number" id="sleepLatency" value="20" step="1" min="0" max="180" />
@@ -116,7 +117,7 @@
       <li>Johns MW. A new method for measuring daytime sleepiness: the Epworth sleepiness scale. Sleep. 1991;14(6):540-545.</li>
       <li>Berry RB, Quan SF, Abreu AR, et al. The AASM Manual for the Scoring of Sleep and Associated Events: Rules, Terminology and Technical Specifications. Version 2.6. Darien, IL: American Academy of Sleep Medicine; 2020.</li>
     </ol>
-    <p class="source-note-extra">ESS 斜率調整、睡眠效率清除速率調整、生理時鐘低點估計法為本工具設計延伸，非文獻直接數據，僅供自我觀察參考，不能取代專業診斷。</p>
+    <p class="source-note-extra">年齡振幅修正已移除；ESS 斜率調整、睡眠效率清除速率調整、生理時鐘低點估計法為本工具設計延伸，非文獻直接數據，僅供自我觀察參考，不能取代專業診斷。</p>
   </footer>
 
   <div id="lightbox" class="lightbox" hidden>

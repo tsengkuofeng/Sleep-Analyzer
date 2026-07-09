@@ -145,7 +145,7 @@
     const habitualWake = parseTimeInput(document.getElementById("habitualWake").value, 7.0);
     const preferredWake = parseTimeInput(document.getElementById("preferredWake").value, 7.0);
     const actualWakeToday = parseTimeInput(document.getElementById("actualWakeToday").value, 7.0);
-    const actualSleepHours = readFloat("actualSleepHours", 6.5);
+    const bedtime = parseTimeInput(document.getElementById("bedtime").value, 23.0);
     const ess = ["ess1", "ess2", "ess3", "ess4"].map(id => parseInt(document.getElementById(id).value, 10));
     const essScore = ess.reduce((a, b) => a + b, 0);
     const essMax = 12;
@@ -161,12 +161,18 @@
 
     const sleepLatencyH = sleepLatencyMin / 60;
     const wasoH = awakenings * (5 / 60); // DESIGN CHOICE: ~5 min per awakening
-    const timeInBed = actualSleepHours + sleepLatencyH + wasoH;
+    // Time in bed and actual sleep duration are both DERIVED from clock
+    // times (bedtime -> wake time), not self-reported directly -- this
+    // matches how sleep diaries/trackers normally work, rather than asking
+    // the person to estimate "how many hours did I sleep" by hand.
+    let timeInBed = actualWakeToday - bedtime;
+    if (timeInBed < 0) timeInBed += 24; // wrapped past midnight
+    const actualSleepHours = Math.max(0, timeInBed - sleepLatencyH - wasoH);
     const sleepEfficiency = timeInBed > 0 ? Math.max(0, Math.min(1, actualSleepHours / timeInBed)) : 1;
     params.sleepClearanceDivisor = M.sleepClearanceDivisor(sleepEfficiency);
 
-    // S at last night's sleep onset ~ upper threshold at that clock time
-    const sleepOnsetClockLastNight = ((actualWakeToday - timeInBed) % 24 + 24) % 24;
+    // S at last night's sleep onset ~ upper threshold at bedtime clock time
+    const sleepOnsetClockLastNight = bedtime;
     const sAtSleepOnset = M.upperThreshold(sleepOnsetClockLastNight, params);
     const sAtWakeToday = M.sDuringSleep(timeInBed, 0, sAtSleepOnset, params);
 
@@ -187,10 +193,10 @@
     const [tSleepNat, tWakeNat, tNat] = M.naturalPeriod(params);
 
     lastAnalysis = {
-      inputs: { desiredSleep, habitualWake, preferredWake, actualWakeToday, actualSleepHours,
+      inputs: { desiredSleep, habitualWake, preferredWake, actualWakeToday, bedtime,
                 ess, essScore, sleepLatencyMin, awakenings },
       derived: { socialJetlag, circadianMinTime, sleepEfficiency, wakeEffort, nowClock, nowDate: now, sNow,
-                 essMax, tSleepNat, tWakeNat, tNat },
+                 essMax, tSleepNat, tWakeNat, tNat, timeInBed, actualSleepHours },
       result,
     };
 
@@ -208,8 +214,8 @@
       ["目標睡眠時數", a.inputs.desiredSleep + " 小時"],
       ["平常幾點起床（社交時間表）", fmtClock(a.inputs.habitualWake)],
       ["自由選擇偏好幾點起床（真實時型）", fmtClock(a.inputs.preferredWake)],
+      ["昨晚上床時間", fmtClock(a.inputs.bedtime)],
       ["今天實際起床時間", fmtClock(a.inputs.actualWakeToday)],
-      ["昨晚實際睡眠時數", a.inputs.actualSleepHours + " 小時"],
       ["ESS - 坐著閱讀時打瞌睡機率", a.inputs.ess[0]],
       ["ESS - 看電視時打瞌睡機率", a.inputs.ess[1]],
       ["ESS - 公共場所安靜坐著打瞌睡機率", a.inputs.ess[2]],
@@ -217,6 +223,8 @@
       ["ESS 總分", a.inputs.essScore + " / " + a.derived.essMax],
       ["昨晚入睡花費時間", a.inputs.sleepLatencyMin + " 分鐘"],
       ["半夜醒來次數", a.inputs.awakenings + " 次"],
+      ["躺床總時數（自動算出）", a.derived.timeInBed.toFixed(2) + " 小時"],
+      ["實際睡眠時數（自動算出）", a.derived.actualSleepHours.toFixed(2) + " 小時"],
     ];
     rows.forEach(([k, v]) => {
       const div = document.createElement("div");
@@ -243,7 +251,7 @@
     const hPlusNow = M.upperThreshold(derived.nowClock, paramsNow);
     const hMinusNow = M.lowerThreshold(derived.nowClock, paramsNow);
     const idx = sleepinessIndex(derived.sNow, hMinusNow, hPlusNow);
-    const sleepDebt = Math.max(0, inputs.desiredSleep - inputs.actualSleepHours);
+    const sleepDebt = Math.max(0, inputs.desiredSleep - derived.actualSleepHours);
 
     // ---- Risk warnings ----
     const riskEl = document.getElementById("riskWarnings");
@@ -565,7 +573,7 @@
     document.getElementById("habitualWake").value = "06:30";
     document.getElementById("preferredWake").value = "08:00";
     document.getElementById("actualWakeToday").value = "06:30";
-    document.getElementById("actualSleepHours").value = "5.5";
+    document.getElementById("bedtime").value = "00:15";
     document.getElementById("ess1").value = "2";
     document.getElementById("ess2").value = "2";
     document.getElementById("ess3").value = "1";
