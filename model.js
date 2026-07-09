@@ -99,7 +99,7 @@
     if (asleep) sleepIntervals.push([segStart, t]);
     return { points, sleepIntervals };
   }
-git
+
   // Natural (unforced) sleep/wake period lengths given zero circadian
   // amplitude, per Skeldon & Dijk eq. for T_sleep, T_wake, T_nat.
   function naturalPeriod(params) {
