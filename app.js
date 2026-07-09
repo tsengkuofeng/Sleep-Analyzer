@@ -451,6 +451,14 @@
     const ctx = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
+    // Paint an explicit opaque white background into the pixel data itself.
+    // The on-screen white look was previously coming only from CSS
+    // (background:#fff on the <canvas> element), which is invisible to
+    // canvas.toBlob()/toDataURL() -- so downloaded PNGs came out with a
+    // transparent background, making dark text/lines vanish when viewed
+    // against a dark background (e.g. phone photo viewers in dark mode).
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
     const padL = 55, padR = 20, padT = 60, padB = 45;
     const plotW = W - padL - padR, plotH = H - padT - padB;
     const tMax = result.points[result.points.length - 1].t - nowClock;
