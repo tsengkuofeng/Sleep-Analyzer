@@ -146,8 +146,8 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
   display:none;
 }
 @keyframes small-wave{
-  from{ transform:translateX(0); }
-  to{ transform:translateX(240px); }
+  from{ background-position:0 0; }
+  to{ background-position:240px 0; }
 }
 @keyframes water-rise-fall{
   0%, 100%{ transform:translateY(0); }
