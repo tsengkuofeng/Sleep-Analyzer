@@ -126,21 +126,20 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
   50% { transform:translate(-50%,-50%) scale(1.035);
     box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
 }
-/* Water fill: height is set directly from --level, so the fill amount
-   always matches the percentage exactly. overflow:hidden here (on the
-   water box itself, not just the outer circle) is what stops the rotating
-   wave shape from ever painting past its own top edge -- i.e. it can no
-   longer bleed pale blue into the area that should stay plain white. */
+/* Water fill: height is set directly from --level, so the visible fill
+   always matches the percentage exactly (no approximated geometry). A thin
+   animated ripple band sits right at the water's surface for the "wave"
+   feel without touching the actual fill boundary. */
 .orbit-center .water-fill{
   position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
-  overflow:hidden; opacity:0; z-index:0;
+  overflow:visible; opacity:0; z-index:0;
   transition:opacity .4s ease, height .8s ease;
   background:linear-gradient(180deg, #5b9bdb 0%, #2c6db5 55%, #235a92 100%);
 }
 .orbit-center[data-stage="0"] .water-fill{ opacity:1; }
 .orbit-center .water-fill::before, .orbit-center .water-fill::after{
   content:""; position:absolute; left:50%; top:0; width:230%; height:230%;
-  transform:translate(-50%,-85%) rotate(0deg);
+  transform:translate(-50%,-95%) rotate(0deg);
   border-radius:44%; background:inherit;
   animation:orbit-wave-sway 5.5s linear infinite;
 }
@@ -148,8 +147,8 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
   opacity:0.75; animation-duration:8.5s; animation-direction:reverse;
 }
 @keyframes orbit-wave-sway{
-  from{ transform:translate(-50%,-85%) rotate(0deg); }
-  to{ transform:translate(-50%,-85%) rotate(360deg); }
+  from{ transform:translate(-50%,-95%) rotate(0deg); }
+  to{ transform:translate(-50%,-95%) rotate(360deg); }
 }
 .orbit-center .center-text{ position:relative; z-index:1; }
 .orbit-center .center-value{
