@@ -114,7 +114,7 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 .orbit-center{
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
   width:168px; height:168px; border-radius:50%; overflow:hidden; cursor:pointer;
-  background:#f9fafc;
+  background:#ffffff;
   box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 26px 10px rgba(44,109,181,0.28);
   animation:orbit-breathe 4.6s ease-in-out infinite;
   display:flex; align-items:center; justify-content:center;
@@ -126,11 +126,10 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
   50% { transform:translate(-50%,-50%) scale(1.035);
     box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
 }
-/* Water fill: the flat rectangle's height is set directly from --level, so
-   the fill amount always matches the percentage exactly. The wobbly wave
-   blobs below are anchored to THIS box's own top edge (top:0) and merely
-   rotate there, so the wavy surface always sits at the correct level too --
-   overflow is left visible here and clipped by the parent circle instead. */
+/* Water fill: height is set directly from --level, so the visible fill
+   always matches the percentage exactly (no approximated geometry). A thin
+   animated ripple band sits right at the water's surface for the "wave"
+   feel without touching the actual fill boundary. */
 .orbit-center .water-fill{
   position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
   overflow:visible; opacity:0; z-index:0;
