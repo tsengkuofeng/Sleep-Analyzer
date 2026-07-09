@@ -36,6 +36,7 @@
   "use strict";
   const M = window.TwoProcessModel;
   let lastAnalysis = null;
+  let lightboxCanvas = null; // currently-shown enlarged chart canvas, for download
 
   // ------------------------------------------------------------------
   // Helpers
@@ -261,7 +262,7 @@
       box2.innerHTML = `
         <div class="risk-box">
           <h4>⚠ 低警覺區（Wake Effort，強制清醒）</h4>
-          <p>模型顯示你今天起床時，睡眠壓力 S 尚未降到「自發性醒來」的下限閾值 H−，代表你是被「叫醒」而非自然醒來，此時醒著需要額外的「清醒努力」，接下來一段時間認知功能（反應速度、專注力）可能受影響。</p>
+          <p>模型顯示你今天起床時，睡眠壓力 S 尚未降到「自發性醒來」的下限閾值 H−，代表你是被「叫醒」而非自然醒來，此時醒著需要額外的「清醒努力」，接下來一段時間認知功能（反應速度、專注力）可能顯著受影響。</p>
         </div>`;
       riskEl.appendChild(box2);
     }
@@ -337,7 +338,7 @@
       </div>
       <div class="orbit-sat sat-c" title="預測睡眠長度">
         <div class="sat-value">${d.duration.toFixed(1)}h</div>
-        <div class="sat-label">預測睡眠長度</div>
+        <div class="sat-label">預測<br>睡眠長度</div>
       </div>
       <div class="orbit-sat sat-d" title="${d.chronotype}">
         <div class="sat-value">${chronotypeShort(d.chronotype)}</div>
@@ -479,7 +480,7 @@
     ctx.strokeStyle = "#333"; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + plotH); ctx.lineTo(padL + plotW, padT + plotH); ctx.stroke();
 
-    ctx.fillStyle = "#333"; ctx.font = "12px sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    ctx.fillStyle = "#333"; ctx.font = "13px sans-serif"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
     for (let v = 0; v <= 1.001; v += 0.2) {
       const y = yPix(v);
       ctx.fillText(v.toFixed(1), padL - 8, y);
@@ -496,19 +497,20 @@
         ctx.setLineDash([]);
         const dAt = new Date(nowDate.getTime() + t * 3600 * 1000);
         const dateLabel = (dAt.getMonth() + 1) + "/" + dAt.getDate();
-        ctx.fillStyle = "#999"; ctx.font = "10px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        ctx.fillStyle = "#999"; ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
         ctx.fillText(dateLabel, x, padT - 4);
       }
     }
 
     // X-axis ticks: actual clock time (HH:MM), not "hours from now" -- easier
     // to read at a glance without mental math.
-    ctx.font = "12px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.font = "bold 13px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "top";
     for (let t = 0; t <= tMax + 0.001; t += 6) {
       const x = xPix(t);
       const label = fmtClock(nowClock + t);
       ctx.fillStyle = "#333"; ctx.fillText(label, x, padT + plotH + 8);
     }
+    ctx.font = "12px sans-serif";
     ctx.fillText("實際時間（每 6 小時標示，虛線為換日）", padL + plotW / 2, padT + plotH + 26);
 
     ctx.save(); ctx.translate(14, padT + plotH / 2); ctx.rotate(-Math.PI / 2);
@@ -535,7 +537,7 @@
     // Mark the actual S/H+ and S/H- crossing points (sleep onset / wake).
     // These are exactly the `sleepIntervals` boundaries already detected by
     // the simulation loop in model.js -- no extra computation needed here.
-    function drawCrossing(t, color, label) {
+    function drawCrossing(t, color, label, labelBelow) {
       const p = nearestPoint(result.points, t);
       const x = xPix(t - nowClock), y = yPix(p.s);
       ctx.setLineDash([2, 3]); ctx.strokeStyle = color; ctx.lineWidth = 1;
@@ -545,12 +547,23 @@
       ctx.fillStyle = color; ctx.fill();
       ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2);
       ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.fillStyle = color; ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
-      ctx.fillText(label + " " + fmtClock(t), x, y - 8);
+      // Bigger bold text with a white halo (outline stroke drawn first) so the
+      // label always stays legible even where it crosses the H+/H- dashed
+      // curves or the sleep-shading band behind it.
+      const text = label + " " + fmtClock(t);
+      const ty = labelBelow ? y + 16 : y - 8;
+      ctx.textAlign = "center"; ctx.textBaseline = labelBelow ? "top" : "bottom";
+      ctx.font = "bold 14px sans-serif"; ctx.lineJoin = "round";
+      ctx.lineWidth = 3.5; ctx.strokeStyle = "#fff"; ctx.strokeText(text, x, ty);
+      ctx.fillStyle = color; ctx.fillText(text, x, ty);
     }
     result.sleepIntervals.forEach(([onset, offset]) => {
-      if (onset - nowClock >= tMin && onset - nowClock <= tMax) drawCrossing(onset, "#b5342c", "入睡");
-      if (offset - nowClock >= tMin && offset - nowClock <= tMax) drawCrossing(offset, "#2c6db5", "起床");
+      // Onset ("入睡") sits near the top of the S curve, so its label fits
+      // above the point; offset ("起床") sits near the bottom right on top
+      // of the H- dashed curve, so its label is placed below instead to
+      // avoid overlapping that line.
+      if (onset - nowClock >= tMin && onset - nowClock <= tMax) drawCrossing(onset, "#b5342c", "入睡", false);
+      if (offset - nowClock >= tMin && offset - nowClock <= tMax) drawCrossing(offset, "#2c6db5", "起床", true);
     });
 
     const legendItems = [
@@ -598,10 +611,36 @@
     big.height = 460 * scale;
     inner.appendChild(big);
     drawChart(big, lastAnalysis.result, lastAnalysis.derived.nowClock, lastAnalysis.derived.nowDate);
+    lightboxCanvas = big;
     lightbox.hidden = false;
   }
   function closeLightbox() {
     document.getElementById("lightbox").hidden = true;
+  }
+
+  // ------------------------------------------------------------------
+  // Save the chart as a PNG image (works for the normal or enlarged
+  // canvas). Uses a Blob + temporary <a download> link rather than a raw
+  // data URL so large images don't hit URL-length limits. On desktop this
+  // downloads directly; on mobile browsers that ignore the `download`
+  // attribute (e.g. iOS Safari), it opens the image in a new tab so the
+  // person can long-press it and choose "Save Image" to store it on the
+  // phone.
+  // ------------------------------------------------------------------
+  function downloadCanvasImage(canvas, filename) {
+    if (!canvas) return;
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    }, "image/png");
   }
 
   window.addEventListener("DOMContentLoaded", function () {
@@ -615,6 +654,14 @@
     });
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeLightbox();
+    });
+
+    document.getElementById("downloadChartBtn").addEventListener("click", function () {
+      downloadCanvasImage(document.getElementById("chart"), "睡眠運動時機分析圖.png");
+    });
+    document.getElementById("lightboxDownload").addEventListener("click", function (e) {
+      e.stopPropagation(); // don't let the click bubble to the backdrop and close the lightbox
+      downloadCanvasImage(lightboxCanvas || document.getElementById("chart"), "睡眠運動時機分析圖.png");
     });
   });
 })();

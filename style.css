@@ -49,7 +49,7 @@ button:disabled{opacity:0.5; cursor:not-allowed;}
 }
 .accordion summary::-webkit-details-marker{display:none;}
 .accordion summary::after{
-  content:"??; flex:none; font-size:1.2rem; color:var(--sub); line-height:1;
+  content:"›"; flex:none; font-size:1.2rem; color:var(--sub); line-height:1;
   transform:rotate(90deg); transition:transform .15s ease;
 }
 .accordion details[open] summary{background:#fff; border-bottom:1px solid var(--line);}
@@ -87,7 +87,13 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 .chart-wrap{position:relative;}
 .zoomable{cursor:zoom-in; transition:filter .15s ease;}
 .zoomable:hover{filter:brightness(0.97);}
-.chart-hint{margin:4px 2px 0; font-size:0.72rem; color:var(--sub); text-align:right;}
+.chart-actions{display:flex; align-items:center; justify-content:flex-end; gap:10px; margin:4px 2px 0;}
+.chart-hint{margin:0; font-size:0.72rem; color:var(--sub);}
+.chart-download-btn{
+  font-size:0.72rem; padding:4px 10px; border-radius:6px; border:1px solid var(--border, #d7dbe2);
+  background:#fff; color:#333; cursor:pointer;
+}
+.chart-download-btn:hover{background:#f2f4f7;}
 
 /* ---- Lightbox ------------------------------------------------------ */
 .lightbox{
@@ -99,8 +105,15 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 .lightbox-inner{max-width:96vw; max-height:92vh; cursor:default;}
 .lightbox-inner canvas{max-width:96vw; max-height:92vh; width:auto; height:auto;
   background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.4);}
+.lightbox-toolbar{position:fixed; top:18px; right:22px; display:flex; align-items:center; gap:10px; z-index:1001;}
+.lightbox-download{
+  height:40px; padding:0 16px; border-radius:20px; cursor:pointer;
+  background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3);
+  font-size:0.85rem; line-height:1;
+}
+.lightbox-download:hover{background:rgba(255,255,255,0.22);}
 .lightbox-close{
-  position:fixed; top:18px; right:22px; width:40px; height:40px; border-radius:50%;
+  width:40px; height:40px; border-radius:50%;
   background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3);
   font-size:1.4rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
 }
@@ -126,8 +139,13 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
   50% { transform:translate(-50%,-50%) scale(1.035);
     box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
 }
-/* Water fill: height is set directly from --level. The small wave is clipped
-   inside the filled area, leaving the unfilled part of the circle white. */
+/* Water fill: height is set directly from --level, so the fill amount
+   always matches the percentage exactly. The wave is a repeating SVG
+   (properly URL-encoded this time) drawn in white, sitting inside the
+   already-correctly-sized water-fill box (overflow:hidden), so it can
+   only ever carve a wavy "foam" edge into the top of the blue area --
+   it can never bleed past the true boundary. A slow translateY bob on
+   the whole fill adds a gentle rise/fall breathing feel. */
 .orbit-center .water-fill{
   position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
   overflow:hidden; opacity:0; z-index:0;

@@ -94,7 +94,10 @@
       </div>
       <div class="chart-wrap">
         <canvas id="chart" class="zoomable" width="900" height="460"></canvas>
-        <p class="chart-hint">點擊圖表可放大檢視</p>
+        <div class="chart-actions">
+          <p class="chart-hint">點擊圖表可放大檢視</p>
+          <button type="button" id="downloadChartBtn" class="chart-download-btn">下載圖片</button>
+        </div>
       </div>
 
       <h3>運動時機建議</h3>
@@ -121,7 +124,10 @@
   </footer>
 
   <div id="lightbox" class="lightbox" hidden>
-    <button type="button" id="lightboxClose" class="lightbox-close" aria-label="關閉">&times;</button>
+    <div class="lightbox-toolbar">
+      <button type="button" id="lightboxDownload" class="lightbox-download">下載圖片</button>
+      <button type="button" id="lightboxClose" class="lightbox-close" aria-label="關閉">&times;</button>
+    </div>
     <div class="lightbox-inner" id="lightboxInner"></div>
   </div>
 
