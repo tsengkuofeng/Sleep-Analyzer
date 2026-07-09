@@ -126,29 +126,45 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
   50% { transform:translate(-50%,-50%) scale(1.035);
     box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
 }
+/* Water fill: height is set directly from --level, so the visible fill
+   always matches the percentage exactly (no approximated geometry). A thin
+   animated ripple band sits right at the water's surface for the "wave"
+   feel without touching the actual fill boundary. */
 .orbit-center .water-fill{
-  position:absolute; inset:0; border-radius:50%; overflow:hidden;
-  opacity:0; transition:opacity .4s ease;
+  position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
+  overflow:hidden; opacity:0; z-index:0;
+  transition:opacity .4s ease, height .8s ease;
+  background:linear-gradient(180deg, #5b9bdb 0%, #2c6db5 55%, #235a92 100%);
 }
 .orbit-center[data-stage="0"] .water-fill{ opacity:1; }
 .orbit-center .water-fill::before, .orbit-center .water-fill::after{
-  content:""; position:absolute; left:50%; width:230%; height:230%;
-  top:var(--water-top, 55%);
-  background:rgba(44,109,181,0.5); border-radius:45%;
-  transform:translate(-50%,-68%) rotate(0deg);
-  animation:orbit-wave 8s linear infinite;
+  content:""; position:absolute; left:-20%; right:-20%; top:-8px; height:16px;
+  background-image:radial-gradient(ellipse at center, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0) 68%);
+  background-repeat:repeat-x; background-size:44px 16px;
+  animation:orbit-wave-shimmer 4.5s linear infinite;
 }
 .orbit-center .water-fill::after{
-  background:rgba(44,109,181,0.28); animation-duration:12s; animation-direction:reverse;
+  top:-4px; height:10px; background-size:64px 10px; opacity:0.6;
+  animation-duration:7s; animation-direction:reverse;
 }
-@keyframes orbit-wave{
-  from{ transform:translate(-50%,-68%) rotate(0deg); }
-  to{ transform:translate(-50%,-68%) rotate(360deg); }
+@keyframes orbit-wave-shimmer{
+  from{ background-position-x:0; }
+  to{ background-position-x:200px; }
 }
 .orbit-center .center-text{ position:relative; z-index:1; }
-.orbit-center .center-value{ font-size:1.5rem; font-weight:700; color:var(--ink); line-height:1.2; }
-.orbit-center .center-caption{ font-size:0.75rem; color:var(--sub); margin-top:2px; }
-.orbit-center .center-hint{ font-size:0.62rem; color:#aab2bd; margin-top:6px; }
+.orbit-center .center-value{
+  font-size:1.5rem; font-weight:700; color:#12233a; line-height:1.2;
+  text-shadow:0 0 5px #fff, 0 0 5px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff,
+    1px -1px 0 #fff, -1px 1px 0 #fff;
+}
+.orbit-center .center-caption{
+  font-size:0.75rem; font-weight:600; color:#2b3542; margin-top:2px;
+  text-shadow:0 0 4px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+}
+.orbit-center .center-hint{
+  font-size:0.62rem; font-weight:600; color:#4a5563; margin-top:6px;
+  text-shadow:0 0 4px #fff, 1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff;
+}
 
 .orbit-sat{
   position:absolute; transform:translate(-50%,-50%);

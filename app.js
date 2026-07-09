@@ -311,7 +311,7 @@
     const wrap = document.createElement("div");
     wrap.className = "orbit-wrap";
     wrap.innerHTML = `
-      <div class="orbit-center" data-stage="0" style="--water-top:${100 - sePct}%">
+      <div class="orbit-center" data-stage="0" style="--level:${sePct}%">
         <div class="water-fill"></div>
         <div class="center-text">
           <div class="center-value">${centerStages[0].value}</div>
