@@ -82,3 +82,90 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 .qa-list div{display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px dashed var(--line);}
 .qa-list div span:first-child{color:var(--sub);}
 .qa-list div span:last-child{font-weight:600; text-align:right;}
+
+/* ---- Chart zoom affordance --------------------------------------- */
+.chart-wrap{position:relative;}
+.zoomable{cursor:zoom-in; transition:filter .15s ease;}
+.zoomable:hover{filter:brightness(0.97);}
+.chart-hint{margin:4px 2px 0; font-size:0.72rem; color:var(--sub); text-align:right;}
+
+/* ---- Lightbox ------------------------------------------------------ */
+.lightbox{
+  position:fixed; inset:0; background:rgba(15,18,24,0.86); z-index:1000;
+  display:flex; align-items:center; justify-content:center; padding:32px;
+  cursor:zoom-out;
+}
+.lightbox[hidden]{display:none;}
+.lightbox-inner{max-width:96vw; max-height:92vh; cursor:default;}
+.lightbox-inner canvas{max-width:96vw; max-height:92vh; width:auto; height:auto;
+  background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.4);}
+.lightbox-close{
+  position:fixed; top:18px; right:22px; width:40px; height:40px; border-radius:50%;
+  background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3);
+  font-size:1.4rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+.lightbox-close:hover{background:rgba(255,255,255,0.22);}
+
+/* ---- Orbit infographic --------------------------------------------- */
+.orbit-wrap{
+  position:relative; width:340px; height:340px; max-width:100%;
+  margin:22px auto 26px;
+}
+.orbit-center{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:168px; height:168px; border-radius:50%; overflow:hidden; cursor:pointer;
+  background:radial-gradient(circle at 35% 30%, #f4f8fd, #dfe9f5 70%);
+  box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 26px 10px rgba(44,109,181,0.28);
+  animation:orbit-breathe 4.6s ease-in-out infinite;
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; user-select:none;
+}
+@keyframes orbit-breathe{
+  0%, 100% { transform:translate(-50%,-50%) scale(1);
+    box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 22px 8px rgba(44,109,181,0.24); }
+  50% { transform:translate(-50%,-50%) scale(1.035);
+    box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
+}
+.orbit-center .water-fill{
+  position:absolute; inset:0; border-radius:50%; overflow:hidden;
+  opacity:0; transition:opacity .4s ease;
+}
+.orbit-center[data-stage="0"] .water-fill{ opacity:1; }
+.orbit-center .water-fill::before, .orbit-center .water-fill::after{
+  content:""; position:absolute; left:50%; width:230%; height:230%;
+  top:var(--water-top, 55%);
+  background:rgba(44,109,181,0.5); border-radius:45%;
+  transform:translate(-50%,-68%) rotate(0deg);
+  animation:orbit-wave 8s linear infinite;
+}
+.orbit-center .water-fill::after{
+  background:rgba(44,109,181,0.28); animation-duration:12s; animation-direction:reverse;
+}
+@keyframes orbit-wave{
+  from{ transform:translate(-50%,-68%) rotate(0deg); }
+  to{ transform:translate(-50%,-68%) rotate(360deg); }
+}
+.orbit-center .center-text{ position:relative; z-index:1; }
+.orbit-center .center-value{ font-size:1.5rem; font-weight:700; color:var(--ink); line-height:1.2; }
+.orbit-center .center-caption{ font-size:0.75rem; color:var(--sub); margin-top:2px; }
+.orbit-center .center-hint{ font-size:0.62rem; color:#aab2bd; margin-top:6px; }
+
+.orbit-sat{
+  position:absolute; transform:translate(-50%,-50%);
+  min-width:84px; max-width:112px; padding:8px 10px; border-radius:12px;
+  background:#fff; border:1px solid var(--line); box-shadow:0 2px 8px rgba(20,20,30,0.06);
+  text-align:center; cursor:default;
+}
+.orbit-sat.clickable{ cursor:pointer; }
+.orbit-sat .sat-value{ font-size:0.95rem; font-weight:700; color:var(--accent); line-height:1.25; }
+.orbit-sat .sat-label{ font-size:0.66rem; color:var(--sub); margin-top:1px; }
+.orbit-sat.sat-a{ top:6%; left:50%; }
+.orbit-sat.sat-b{ top:37%; left:93%; }
+.orbit-sat.sat-c{ top:87%; left:76%; }
+.orbit-sat.sat-d{ top:87%; left:24%; }
+.orbit-sat.sat-e{ top:37%; left:7%; }
+@media (max-width:480px){
+  .orbit-wrap{ width:290px; height:290px; }
+  .orbit-center{ width:140px; height:140px; }
+  .orbit-sat{ min-width:70px; max-width:92px; padding:6px 8px; }
+}

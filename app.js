@@ -259,26 +259,112 @@
     }
 
     // ---- Report list (collapsible accordion) ----
+    // Several variables (sleepiness index, predicted onset/wake, duration,
+    // chronotype, social jetlag, sleep efficiency, sleep debt, current time)
+    // are pulled out of this plain list and shown instead in the orbit
+    // infographic below (see renderOrbit) so they're not duplicated here.
     const lines = [
-      ["目前時間（即時）", fmtClock(derived.nowClock)],
-      ["目前睡意指數", idx.toFixed(0) + " / 100（0=剛睡飽，100=已達模型入睡閾值）"],
-      ["預測今晚入睡時間", fmtClock(firstOnset)],
-      ["預測明早起床時間", fmtClock(firstOffset)],
-      ["預測睡眠長度", (firstOffset - firstOnset).toFixed(1) + " 小時"],
-      ["真實時型（依自由選擇起床時間推算）", chronotypeLabel(derived.circadianMinTime)],
-      ["社交時差 (Social Jetlag) [6]", (derived.socialJetlag >= 0 ?
-        ("平常比真實偏好早起約 " + derived.socialJetlag.toFixed(1) + " 小時") :
-        ("平常比真實偏好晚起約 " + Math.abs(derived.socialJetlag).toFixed(1) + " 小時"))],
       ["主觀嗜睡度 (mini-ESS) [7]", inputs.essScore + " / " + derived.essMax + "　" + essLabel(inputs.essScore)],
-      ["睡眠效率 (SE) [8]", (derived.sleepEfficiency * 100).toFixed(0) + "%"],
-      ["昨晚睡眠負債", sleepDebt.toFixed(1) + " 小時（相對目標睡眠時數）"],
       ["模型自然睡眠週期", "睡 " + derived.tSleepNat.toFixed(1) + " h + 醒 " + derived.tWakeNat.toFixed(1) + " h = 週期 " + derived.tNat.toFixed(1) + " h"],
     ];
     reportEl.appendChild(buildAccordion(lines));
 
-    drawChart(result, derived.nowClock, derived.nowDate);
+    renderOrbit({
+      sleepEfficiency: derived.sleepEfficiency,
+      sleepDebt,
+      nowClock: derived.nowClock,
+      idx,
+      firstOnset,
+      firstOffset,
+      duration: firstOffset - firstOnset,
+      chronotype: chronotypeLabel(derived.circadianMinTime),
+      socialJetlag: derived.socialJetlag,
+    });
+
+    drawChart(document.getElementById("chart"), result, derived.nowClock, derived.nowDate);
     renderExerciseAdvice(a);
     renderGlossary();
+  }
+
+  // ------------------------------------------------------------------
+  // Orbit infographic: a "breathing" glowing circle in the middle that
+  // cycles through 3 stages on click (sleep efficiency water-level ->
+  // sleep debt -> current time), surrounded by 5 satellite readouts.
+  // Purely a presentation layer over numbers already computed above.
+  // ------------------------------------------------------------------
+  function chronotypeShort(label) {
+    if (label.indexOf("早鳥") >= 0) return "早鳥型";
+    if (label.indexOf("夜貓") >= 0) return "夜貓型";
+    return "中間型";
+  }
+  function renderOrbit(d) {
+    const el = document.getElementById("reportOrbit");
+    el.innerHTML = "";
+
+    const sePct = Math.round(d.sleepEfficiency * 100);
+    const centerStages = [
+      { value: sePct + "%", caption: "睡眠效率", hint: "點擊切換：睡眠負債" },
+      { value: d.sleepDebt.toFixed(1) + "h", caption: "睡眠負債", hint: "點擊切換：目前時間" },
+      { value: fmtClock(d.nowClock), caption: "目前時間", hint: "點擊切換：睡眠效率" },
+    ];
+
+    const wrap = document.createElement("div");
+    wrap.className = "orbit-wrap";
+    wrap.innerHTML = `
+      <div class="orbit-center" data-stage="0" style="--water-top:${100 - sePct}%">
+        <div class="water-fill"></div>
+        <div class="center-text">
+          <div class="center-value">${centerStages[0].value}</div>
+          <div class="center-caption">${centerStages[0].caption}</div>
+          <div class="center-hint">${centerStages[0].hint}</div>
+        </div>
+      </div>
+      <div class="orbit-sat sat-a" title="目前睡意指數（0=剛睡飽，100=已達模型入睡閾值）">
+        <div class="sat-value">${d.idx.toFixed(0)}</div>
+        <div class="sat-label">睡意指數</div>
+      </div>
+      <div class="orbit-sat sat-b clickable" id="orbitSatB" data-stage="0" title="點擊切換：預測入睡／預測起床">
+        <div class="sat-value">${fmtClock(d.firstOnset)}</div>
+        <div class="sat-label">預測入睡</div>
+      </div>
+      <div class="orbit-sat sat-c" title="預測睡眠長度">
+        <div class="sat-value">${d.duration.toFixed(1)}h</div>
+        <div class="sat-label">預測睡眠長度</div>
+      </div>
+      <div class="orbit-sat sat-d" title="${d.chronotype}">
+        <div class="sat-value">${chronotypeShort(d.chronotype)}</div>
+        <div class="sat-label">真實時型</div>
+      </div>
+      <div class="orbit-sat sat-e" title="社交時差 (Social Jetlag) [6]">
+        <div class="sat-value">${(d.socialJetlag >= 0 ? "+" : "−") + Math.abs(d.socialJetlag).toFixed(1)}h</div>
+        <div class="sat-label">社交時差</div>
+      </div>
+    `;
+    el.appendChild(wrap);
+
+    // Center circle: click cycles through 3 stages.
+    const centerEl = wrap.querySelector(".orbit-center");
+    centerEl.addEventListener("click", function () {
+      const stage = (parseInt(centerEl.getAttribute("data-stage"), 10) + 1) % 3;
+      centerEl.setAttribute("data-stage", String(stage));
+      centerEl.querySelector(".center-value").textContent = centerStages[stage].value;
+      centerEl.querySelector(".center-caption").textContent = centerStages[stage].caption;
+      centerEl.querySelector(".center-hint").textContent = centerStages[stage].hint;
+    });
+
+    // Satellite b: click toggles predicted sleep onset <-> predicted wake time.
+    const satB = wrap.querySelector("#orbitSatB");
+    satB.addEventListener("click", function () {
+      const stage = (parseInt(satB.getAttribute("data-stage"), 10) + 1) % 2;
+      satB.setAttribute("data-stage", String(stage));
+      if (stage === 0) {
+        satB.querySelector(".sat-value").textContent = fmtClock(d.firstOnset);
+        satB.querySelector(".sat-label").textContent = "預測入睡";
+      } else {
+        satB.querySelector(".sat-value").textContent = fmtClock(d.firstOffset);
+        satB.querySelector(".sat-label").textContent = "預測起床";
+      }
+    });
   }
 
   // ------------------------------------------------------------------
@@ -341,8 +427,18 @@
   }
 
   // ------------------------------------------------------------------
-  function drawChart(result, nowClock, nowDate) {
-    const canvas = document.getElementById("chart");
+  // Finds the simulated point nearest a given clock time t (used to read
+  // off the S/H+/H- values right at a sleep-onset or wake crossing).
+  function nearestPoint(points, t) {
+    let best = points[0], bestDiff = Math.abs(points[0].t - t);
+    for (let i = 1; i < points.length; i++) {
+      const diff = Math.abs(points[i].t - t);
+      if (diff < bestDiff) { best = points[i]; bestDiff = diff; }
+    }
+    return best;
+  }
+
+  function drawChart(canvas, result, nowClock, nowDate) {
     const ctx = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
@@ -428,6 +524,27 @@
     drawLine("hMinus", "#2c6db5", true);
     drawLine("s", "#111111", false);
 
+    // Mark the actual S/H+ and S/H- crossing points (sleep onset / wake).
+    // These are exactly the `sleepIntervals` boundaries already detected by
+    // the simulation loop in model.js -- no extra computation needed here.
+    function drawCrossing(t, color, label) {
+      const p = nearestPoint(result.points, t);
+      const x = xPix(t - nowClock), y = yPix(p.s);
+      ctx.setLineDash([2, 3]); ctx.strokeStyle = color; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, padT + plotH); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = color; ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillText(label + " " + fmtClock(t), x, y - 8);
+    }
+    result.sleepIntervals.forEach(([onset, offset]) => {
+      if (onset - nowClock >= tMin && onset - nowClock <= tMax) drawCrossing(onset, "#b5342c", "入睡");
+      if (offset - nowClock >= tMin && offset - nowClock <= tMax) drawCrossing(offset, "#2c6db5", "起床");
+    });
+
     const legendItems = [
       { color: "#111111", label: "S(t) 睡眠壓力", dashed: false },
       { color: "#b5342c", label: "H+ 上閾值（入睡）", dashed: true },
@@ -457,8 +574,39 @@
     document.getElementById("awakenings").value = "2";
   }
 
+  // ------------------------------------------------------------------
+  // Lightbox: click any .zoomable element (currently just the 48h chart)
+  // to view an enlarged, freshly-redrawn copy; close via the × button,
+  // clicking the dark backdrop, or Escape.
+  // ------------------------------------------------------------------
+  function openChartLightbox() {
+    if (!lastAnalysis) return;
+    const lightbox = document.getElementById("lightbox");
+    const inner = document.getElementById("lightboxInner");
+    inner.innerHTML = "";
+    const big = document.createElement("canvas");
+    const scale = 2;
+    big.width = 900 * scale;
+    big.height = 460 * scale;
+    inner.appendChild(big);
+    drawChart(big, lastAnalysis.result, lastAnalysis.derived.nowClock, lastAnalysis.derived.nowDate);
+    lightbox.hidden = false;
+  }
+  function closeLightbox() {
+    document.getElementById("lightbox").hidden = true;
+  }
+
   window.addEventListener("DOMContentLoaded", function () {
     document.getElementById("analyzeBtn").addEventListener("click", analyze);
     document.getElementById("demoBtn").addEventListener("click", function () { fillDemoValues(); analyze(); });
+
+    document.getElementById("chart").addEventListener("click", openChartLightbox);
+    document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+    document.getElementById("lightbox").addEventListener("click", function (e) {
+      if (e.target.id === "lightbox") closeLightbox();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeLightbox();
+    });
   });
 })();

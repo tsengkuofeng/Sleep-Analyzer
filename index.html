@@ -82,6 +82,7 @@
       <h2>3. 分析報表與解析</h2>
       <div id="riskWarnings"></div>
       <div id="report"></div>
+      <div id="reportOrbit"></div>
 
       <h3>未來 48 小時睡眠壓力與運動時機模擬</h3>
       <div class="legend-row">
@@ -90,7 +91,10 @@
         <span><span class="legend-swatch" style="background:var(--redBg);border:1px solid var(--red)"></span>紅燈：距入睡 &lt; 2 小時，禁止高強度運動</span>
         <span><span class="legend-swatch" style="background:rgba(120,120,120,0.3)"></span>灰色：預測睡眠期間</span>
       </div>
-      <canvas id="chart" width="900" height="460"></canvas>
+      <div class="chart-wrap">
+        <canvas id="chart" class="zoomable" width="900" height="460"></canvas>
+        <p class="chart-hint">點擊圖表可放大檢視</p>
+      </div>
 
       <h3>運動時機建議</h3>
       <div id="exerciseAdvice"></div>
@@ -112,8 +116,13 @@
       <li>Johns MW. A new method for measuring daytime sleepiness: the Epworth sleepiness scale. Sleep. 1991;14(6):540-545.</li>
       <li>Berry RB, Quan SF, Abreu AR, et al. The AASM Manual for the Scoring of Sleep and Associated Events: Rules, Terminology and Technical Specifications. Version 2.6. Darien, IL: American Academy of Sleep Medicine; 2020.</li>
     </ol>
-    <p class="source-note-extra">ESS 斜率調整、睡眠效率清除速率調整、生理時鐘低點估計法為本工具設計延伸，非雙歷程文獻內容，僅供自我觀察參考，不能取代專業診斷。</p>
+    <p class="source-note-extra">年齡振幅修正已移除；ESS 斜率調整、睡眠效率清除速率調整、生理時鐘低點估計法為本工具設計延伸，非文獻直接數據，僅供自我觀察參考，不能取代專業診斷。</p>
   </footer>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <button type="button" id="lightboxClose" class="lightbox-close" aria-label="關閉">&times;</button>
+    <div class="lightbox-inner" id="lightboxInner"></div>
+  </div>
 
   <script src="model.js"></script>
   <script src="app.js"></script>
