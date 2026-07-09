@@ -114,7 +114,7 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 .orbit-center{
   position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
   width:168px; height:168px; border-radius:50%; overflow:hidden; cursor:pointer;
-  background:#eef1f5;
+  background:#f9fafc;
   box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 26px 10px rgba(44,109,181,0.28);
   animation:orbit-breathe 4.6s ease-in-out infinite;
   display:flex; align-items:center; justify-content:center;
@@ -127,29 +127,29 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
     box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
 }
 /* Water fill: the flat rectangle's height is set directly from --level, so
-   the fill amount always matches the percentage exactly. overflow:hidden
-   here (not on the outer circle) is what guarantees the wave blobs below
-   can NEVER paint above this box's own top edge -- i.e. never over the
-   unfilled area -- no matter how big they are or how they're rotated. */
+   the fill amount always matches the percentage exactly. The wobbly wave
+   blobs below are anchored to THIS box's own top edge (top:0) and merely
+   rotate there, so the wavy surface always sits at the correct level too --
+   overflow is left visible here and clipped by the parent circle instead. */
 .orbit-center .water-fill{
   position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
-  overflow:hidden; opacity:0; z-index:0;
+  overflow:visible; opacity:0; z-index:0;
   transition:opacity .4s ease, height .8s ease;
   background:linear-gradient(180deg, #5b9bdb 0%, #2c6db5 55%, #235a92 100%);
 }
 .orbit-center[data-stage="0"] .water-fill{ opacity:1; }
 .orbit-center .water-fill::before, .orbit-center .water-fill::after{
-  content:""; position:absolute; left:50%; top:0; width:340px; height:340px;
-  transform:translate(-50%,-72%) rotate(0deg);
+  content:""; position:absolute; left:50%; top:0; width:230%; height:230%;
+  transform:translate(-50%,-95%) rotate(0deg);
   border-radius:44%; background:inherit;
   animation:orbit-wave-sway 5.5s linear infinite;
 }
 .orbit-center .water-fill::after{
-  opacity:0.7; animation-duration:8.5s; animation-direction:reverse;
+  opacity:0.75; animation-duration:8.5s; animation-direction:reverse;
 }
 @keyframes orbit-wave-sway{
-  from{ transform:translate(-50%,-72%) rotate(0deg); }
-  to{ transform:translate(-50%,-72%) rotate(360deg); }
+  from{ transform:translate(-50%,-95%) rotate(0deg); }
+  to{ transform:translate(-50%,-95%) rotate(360deg); }
 }
 .orbit-center .center-text{ position:relative; z-index:1; }
 .orbit-center .center-value{
