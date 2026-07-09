@@ -74,8 +74,10 @@ button:disabled{opacity:0.5; cursor:not-allowed;}
 .disclaimer{color:var(--sub); font-size:0.8rem; margin:8px 0;}
 canvas{max-width:100%; border-radius:10px; background:#fff;}
 ol{padding-left:20px; font-size:0.88rem; color:var(--sub);}
-footer{text-align:center; color:var(--sub); font-size:0.82rem; padding:20px;}
-footer .source-note{max-width:640px; margin:6px auto 0; text-align:right; font-size:0.7rem; color:#9aa2ad; line-height:1.5;}
+footer{max-width:920px; margin:0 auto; text-align:center; color:var(--sub); font-size:0.82rem; padding:20px 16px;}
+ol.source-note{margin:8px 0 0; text-align:left; font-size:0.68rem; color:#9aa2ad; line-height:1.5; padding-left:1.4em;}
+ol.source-note li{margin:2px 0; text-align:left;}
+p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9aa2ad; line-height:1.5;}
 .qa-list{font-size:0.9rem;}
 .qa-list div{display:flex; justify-content:space-between; gap:12px; padding:6px 0; border-bottom:1px dashed var(--line);}
 .qa-list div span:first-child{color:var(--sub);}

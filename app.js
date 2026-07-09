@@ -10,19 +10,21 @@
  * - Two-process model math: Borbély 1982 [1]; Daan, Beersma & Borbély 1984
  *   [2]; Skeldon & Dijk 2025 [3] (see model.js header). The "wake effort"
  *   concept is taken directly from Skeldon & Dijk's terminology [3].
- * - Exercise type/duration guidance: Li et al. 2024 [4].
- * - Exercise-timing "yellow zone" delay (~36 min) and autonomic effects:
- *   Leota et al. 2025 [5].
- * - "Red zone" bedtime heart-rate elevation (>=20 bpm) and SOL/SE effects:
- *   Stutz, Eiholzer & Spengler 2019 [6].
- * - Social jetlag concept: Wittmann et al. 2006 [7] (this app uses a
+ * - Exercise-timing dose-response (the >=4h / 2-4h / <2h traffic-light
+ *   cutoffs and their described effects): Leota et al., Nat Commun
+ *   2025;16:58271 [4].
+ * - Exercise type / duration / regularity guidance (type doesn't matter
+ *   much; longer duration helps regardless of intensity; regular exercise
+ *   beats a single bout): Kline et al., Sleep Med Rev 2021;58:101489,
+ *   umbrella review of 34 systematic reviews/meta-analyses [5].
+ * - Social jetlag concept: Wittmann et al. 2006 [6] (this app uses a
  *   simplified habitual-vs-preferred-wake proxy, not the original MSF-MSW
  *   mid-sleep computation).
  * - mini-ESS is a custom 4-item, unvalidated abbreviation loosely modelled
- *   on the Epworth Sleepiness Scale concept [8]; scoring/gain formula is a
+ *   on the Epworth Sleepiness Scale concept [7]; scoring/gain formula is a
  *   DESIGN CHOICE, not the validated ESS instrument.
  * - Sleep efficiency (SE) definition: standard PSG/clinical metric, see
- *   AASM Scoring Manual [9]; the SE-based clearance-rate adjustment itself
+ *   AASM Scoring Manual [8]; the SE-based clearance-rate adjustment itself
  *   is an engineering DESIGN CHOICE documented in model.js, not a
  *   coefficient taken from any cited paper.
  * - ESS wake-gain adjustment, circadian-minimum estimation (preferred wake
@@ -86,9 +88,9 @@
   }
 
   // ---- Exercise zone classification --------------------------------
-  // gap = hours until the next predicted sleep onset. Thresholds follow
-  // Leota et al. 2025 (2-h exercise-timing bins relative to habitual sleep
-  // onset) and Stutz et al. 2019 (bedtime HR elevation thresholds).
+  // gap = hours until the next predicted sleep onset. Thresholds (>=4h
+  // green / 2-4h yellow / <2h red) follow the dose-response cutoffs
+  // reported in Leota et al., Nat Commun 2025;16:58271 [4].
   function classifyZone(gap) {
     if (gap === null) return "green";
     if (gap >= 4) return "green";
@@ -149,7 +151,6 @@
     const essMax = 12;
     const sleepLatencyMin = readFloat("sleepLatency", 20);
     const awakenings = readFloat("awakenings", 1);
-    const exerciseType = document.getElementById("exerciseType").value;
 
     const socialJetlag = wrapDiff(habitualWake, preferredWake); // + = wakes earlier than true preference
     const circadianMinTime = ((preferredWake - 2.0) % 24 + 24) % 24;
@@ -187,7 +188,7 @@
 
     lastAnalysis = {
       inputs: { desiredSleep, habitualWake, preferredWake, actualWakeToday, actualSleepHours,
-                ess, essScore, sleepLatencyMin, awakenings, exerciseType },
+                ess, essScore, sleepLatencyMin, awakenings },
       derived: { socialJetlag, circadianMinTime, sleepEfficiency, wakeEffort, nowClock, nowDate: now, sNow,
                  essMax, tSleepNat, tWakeNat, tNat },
       result,
@@ -216,7 +217,6 @@
       ["ESS 總分", a.inputs.essScore + " / " + a.derived.essMax],
       ["昨晚入睡花費時間", a.inputs.sleepLatencyMin + " 分鐘"],
       ["半夜醒來次數", a.inputs.awakenings + " 次"],
-      ["偏好運動類型", { combined: "阻力+有氧", resistance: "阻力訓練", aerobic: "有氧運動" }[a.inputs.exerciseType]],
     ];
     rows.forEach(([k, v]) => {
       const div = document.createElement("div");
@@ -266,11 +266,11 @@
       ["預測明早起床時間", fmtClock(firstOffset)],
       ["預測睡眠長度", (firstOffset - firstOnset).toFixed(1) + " 小時"],
       ["真實時型（依自由選擇起床時間推算）", chronotypeLabel(derived.circadianMinTime)],
-      ["社交時差 (Social Jetlag) [7]", (derived.socialJetlag >= 0 ?
+      ["社交時差 (Social Jetlag) [6]", (derived.socialJetlag >= 0 ?
         ("平常比真實偏好早起約 " + derived.socialJetlag.toFixed(1) + " 小時") :
         ("平常比真實偏好晚起約 " + Math.abs(derived.socialJetlag).toFixed(1) + " 小時"))],
-      ["主觀嗜睡度 (mini-ESS) [8]", inputs.essScore + " / " + derived.essMax + "　" + essLabel(inputs.essScore)],
-      ["睡眠效率 (SE) [9]", (derived.sleepEfficiency * 100).toFixed(0) + "%"],
+      ["主觀嗜睡度 (mini-ESS) [7]", inputs.essScore + " / " + derived.essMax + "　" + essLabel(inputs.essScore)],
+      ["睡眠效率 (SE) [8]", (derived.sleepEfficiency * 100).toFixed(0) + "%"],
       ["昨晚睡眠負債", sleepDebt.toFixed(1) + " 小時（相對目標睡眠時數）"],
       ["模型自然睡眠週期", "睡 " + derived.tSleepNat.toFixed(1) + " h + 醒 " + derived.tWakeNat.toFixed(1) + " h = 週期 " + derived.tNat.toFixed(1) + " h"],
     ];
@@ -283,18 +283,16 @@
 
   // ------------------------------------------------------------------
   function renderExerciseAdvice(a) {
-    const { inputs, result, derived } = a;
+    const { result, derived } = a;
     const el = document.getElementById("exerciseAdvice");
     el.innerHTML = "";
-
-    const typeLabel = { combined: "阻力+有氧", resistance: "阻力訓練", aerobic: "有氧運動" };
 
     const rankBox = document.createElement("div");
     rankBox.className = "info-box";
     rankBox.innerHTML = `
-      <h4>黃金處方 [4]</h4>
-      <p>研究顯示，阻力+有氧一起做，改善睡眠品質的效果優於只做單一種類；單次運動抓「高強度、≤30 分鐘」就好，效果比 40–55 分鐘的中長時間訓練更好。</p>
-      <p>你目前偏好「${typeLabel[inputs.exerciseType]}」。${inputs.exerciseType !== "combined" ? "可以考慮改成阻力+有氧一起做，效果會更好。" : "已經是建議的組合。"}</p>
+      <h4>運動類型、時長與規律性 [5]</h4>
+      <p>大型傘形回顧（整合 34 篇系統性回顧與統合分析）顯示，有氧運動、阻力訓練、身心運動（如太極、瑜伽）對睡眠的效益「大致相當」——種類差異不大，不需要糾結選哪一種。</p>
+      <p>真正有幫助的是：單次或規律運動的時間越長，效果越好，且不受運動強度高低影響；規律運動比單次運動的整體效益更全面。</p>
     `;
     el.appendChild(rankBox);
 
@@ -304,7 +302,7 @@
       box.className = "exercise-window green";
       box.innerHTML = `<strong>建議運動時段：${fmtClock(green.start)} – ${fmtClock(green.end)}</strong>
         <span class="tag green">全綠燈區</span>
-        <p style="margin:8px 0 0">此時段距離預測入睡時間 &gt; 4 小時，這時候做高強度運動不會干擾今晚睡眠。</p>`;
+        <p style="margin:8px 0 0">依劑量反應研究 [4]，只要在預測入睡時間前 4 小時以上結束運動，無論強度高低（含高強度），入睡時間、睡眠時長與睡眠品質都不會受影響。</p>`;
       el.appendChild(box);
     } else {
       el.innerHTML += `<p class="disclaimer">未來 48 小時內找不到明顯的綠燈運動時段，建議優先安排在起床後不久、距離下次預測入睡 4 小時以上的時間。</p>`;
@@ -314,11 +312,11 @@
     yellowBox.innerHTML = `
       <div class="info-box">
         <h4><span class="tag yellow">黃燈警戒區</span> 入睡前 2–4 小時</h4>
-        <p>建議改為中、輕度負荷。若此時仍進行高強度訓練，依文獻資料 [5]，運動結束於入睡前 2 小時的情況下，入睡時間平均延後約 <strong>36 分鐘</strong>，且睡眠持續時間縮短、夜間靜息心率上升、心率變異度下降。</p>
+        <p>依劑量反應研究 [4]，運動負荷（強度 × 時長）越高、越接近入睡時間，對睡眠的干擾就越明顯：輕、中強度運動的影響與不運動相近，但高強度以上開始出現漸進式的負面影響。</p>
       </div>
       <div class="risk-box">
         <h4><span class="tag red">紅燈禁止區</span> 入睡前 &lt; 2 小時</h4>
-        <p>嚴禁高強度運動。依統合分析 [6]，睡前劇烈運動可能使就寢時心率較平常增加約 <strong>20 bpm 以上</strong>（部分研究達 26 bpm），顯著延長入睡潛伏期 (SOL) 並降低睡眠效率 (SE)；中低強度運動對睡眠參數影響則不顯著。</p>
+        <p>依同一研究 [4]，此時段所有強度皆明顯惡化睡眠，強度越高影響越大；若運動結束時間已經超過平常入睡時間點，影響最為劇烈。建議避免在此時段進行任何強度的運動。</p>
       </div>
     `;
     el.appendChild(yellowBox);
@@ -332,11 +330,11 @@
       ["H+ 上閾值", "睡眠壓力達到此線就會自然想睡（入睡閾值），此線隨晝夜節律上下擺動，晚間最高（不易入睡），凌晨前後最低（易入睡）。"],
       ["H− 下閾值", "睡眠壓力降到此線以下就會自然醒來（起床閾值），同樣隨晝夜節律擺動。"],
       ["清醒努力 (Wake Effort) [3]", "若鬧鐘把你在 S 尚未降到 H− 之前就叫醒，代表身體本來還想睡，醒著需要額外「努力」維持清醒，這段時間專注力與反應會比平常差。"],
-      ["社交時差 (Social Jetlag) [7]", "平常因為上班上課等社會作息、被迫起床時間，和你身體真正偏好的起床時間之間的落差，落差越大代表越「時差」。本工具用「平常起床−自由選擇偏好起床」簡化估算，非原始文獻的完整計算方式（原始方法用自由日與工作日的中睡時間差）。"],
-      ["睡眠效率 (SE) [9]", "實際睡著時間 ÷ 躺在床上的總時間；數字越低代表翻來覆去、半夜清醒的比例越高。"],
+      ["社交時差 (Social Jetlag) [6]", "平常因為上班上課等社會作息、被迫起床時間，和你身體真正偏好的起床時間之間的落差，落差越大代表越「時差」。本工具用「平常起床−自由選擇偏好起床」簡化估算，非原始文獻的完整計算方式（原始方法用自由日與工作日的中睡時間差）。"],
+      ["睡眠效率 (SE) [8]", "實際睡著時間 ÷ 躺在床上的總時間；數字越低代表翻來覆去、半夜清醒的比例越高。"],
       ["睡眠負債", "目標睡眠時數與實際睡眠時數的差距，長期累積會讓睡眠壓力基準線持續墊高。"],
       ["真實時型", "根據你「自由選擇偏好起床時間」推算出的生理時鐘傾向，分成早鳥型、中間型、夜貓型。早鳥型代表生理時鐘低點較早，通常較容易早睡早起；夜貓型相反，生理時鐘低點較晚，容易晚睡晚起；中間型介於兩者之間，是最常見的類型，早睡早起或晚睡晚起都還算能適應。這只是傾向分類，不是絕對，僅供參考。"],
-      ["主觀嗜睡度 (mini-ESS) 分數怎麼看 [8]", "總分 0–12：0–3 分偏低，白天精神狀況多半不錯；4–6 分中等，是最常見的範圍，偶爾會累但大致正常；7–9 分偏高，白天嗜睡感較明顯，可能已經影響專注力；10–12 分最高，建議留意整體睡眠量是否足夠，若持續嗜睡可考慮諮詢睡眠專科。本工具為簡化 4 題版本，非正式驗證過的 Epworth 量表，僅供自我觀察參考。"],
+      ["主觀嗜睡度 (mini-ESS) 分數怎麼看 [7]", "總分 0–12：0–3 分偏低，白天精神狀況多半不錯；4–6 分中等，是最常見的範圍，偶爾會累但大致正常；7–9 分偏高，白天嗜睡感較明顯，可能已經影響專注力；10–12 分最高，建議留意整體睡眠量是否足夠，若持續嗜睡可考慮諮詢睡眠專科。本工具為簡化 4 題版本，非正式驗證過的 Epworth 量表，僅供自我觀察參考。"],
       ["模型自然睡眠週期", "假設完全不受鬧鐘、日夜節律等外部提示干擾，純粹依你的睡眠壓力參數，模型推算出身體會自然形成的睡／醒週期長度。「睡」是自然會睡多久、「醒」是自然會醒多久，兩者相加是「週期」。這個週期不一定剛好等於 24 小時，因為這是理論值、不是你實際的日夜作息，差異大小不代表有問題，只是反映模型參數的特性，可以當作參考指標。"],
     ];
     el.appendChild(buildAccordion(items));
@@ -415,7 +413,7 @@
     ctx.textAlign = "center"; ctx.font = "14px sans-serif";
     ctx.fillText("雙歷程模型：未來 48 小時睡眠壓力與運動時機模擬", padL + plotW / 2, 16);
     ctx.font = "11px sans-serif"; ctx.fillStyle = "#666";
-    ctx.fillText("模型 [1,2,3]；運動時機色帶 [5,6]", padL + plotW / 2, 34);
+    ctx.fillText("模型 [1,2,3]；運動時機色帶 [4]", padL + plotW / 2, 34);
 
     function drawLine(key, color, dashed) {
       ctx.strokeStyle = color; ctx.lineWidth = dashed ? 1.4 : 2.2; ctx.setLineDash(dashed ? [5, 4] : []);
@@ -457,7 +455,6 @@
     document.getElementById("ess4").value = "2";
     document.getElementById("sleepLatency").value = "35";
     document.getElementById("awakenings").value = "2";
-    document.getElementById("exerciseType").value = "aerobic";
   }
 
   window.addEventListener("DOMContentLoaded", function () {

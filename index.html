@@ -15,12 +15,12 @@
   <main>
 
     <section class="card">
-      <h2>1. 基本資料 </h2>
+      <h2>1. 基本資料</h2>
       <label>你希望的目標睡眠時數（小時）
         <input type="number" id="desiredSleep" value="8" step="0.5" min="4" max="12" />
       </label>
 
-      <div class="group-label">① 生理時鐘相位校準（區分社交時差 [7] 與真實時型）</div>
+      <div class="group-label">① 生理時鐘相位校準（區分社交時差 [6] 與真實時型）</div>
       <div class="row2">
         <label>你平常幾點起床？（社交時間表）
           <input type="time" id="habitualWake" value="07:00" />
@@ -40,7 +40,7 @@
         </label>
       </div>
 
-      <div class="group-label">③ 主觀嗜睡度校準（簡約版 Epworth 嗜睡量表 ESS [8]）</div>
+      <div class="group-label">③ 主觀嗜睡度校準（簡約版 Epworth 嗜睡量表 ESS [7]）</div>
       <p class="group-desc">請針對以下情境評估「打瞌睡」的機率：0=從不、1=偶爾、2=時常、3=幾乎一定</p>
       <div class="row2">
         <label>坐著閱讀時
@@ -57,7 +57,7 @@
         </label>
       </div>
 
-      <div class="group-label">④ 即時睡眠質量數據（睡眠效率 [9]）</div>
+      <div class="group-label">④ 即時睡眠質量數據（睡眠效率 [8]）</div>
       <div class="row2">
         <label>昨晚入睡花多久時間？（分鐘）
           <input type="number" id="sleepLatency" value="20" step="1" min="0" max="180" />
@@ -66,15 +66,6 @@
           <input type="number" id="awakenings" value="1" step="1" min="0" max="15" />
         </label>
       </div>
-
-      <div class="group-label">⑤ 運動類型偏好 [4,5,6]</div>
-      <label>你偏好的運動類型
-        <select id="exerciseType">
-          <option value="combined" selected>阻力+有氧</option>
-          <option value="resistance">阻力訓練</option>
-          <option value="aerobic">有氧運動</option>
-        </select>
-      </label>
 
       <div class="button-row">
         <button type="button" id="analyzeBtn">開始分析</button>
@@ -115,14 +106,13 @@
       <li>Borbély AA. A two process model of sleep regulation. Hum Neurobiol. 1982;1(3):195-204.</li>
       <li>Daan S, Beersma DGM, Borbély AA. Timing of human sleep: recovery process gated by a circadian pacemaker. Am J Physiol. 1984;246(2):R161-83.</li>
       <li>Skeldon AC, Dijk DJ. The complexity and commonness of the two-process model of sleep regulation from a mathematical perspective. NPJ Biol Timing Sleep. 2025;2:24.</li>
-      <li>Li Y, Wang W, Wang W, et al. Effects of different exercise prescriptions on sleep quality: a systematic review and network meta-analysis. Front Psychol. 2024;15:1466277.</li>
-      <li>Leota J, Presby DM, Le F, Czeisler MÉ, Facer-Childs ER, et al. Exercise timing, strain and nocturnal autonomic activity in free-living conditions. Nat Commun. 2025.</li>
-      <li>Stutz J, Eiholzer R, Spengler CM. Effects of evening exercise on sleep in healthy participants: a systematic review and meta-analysis. Sports Med. 2019;49:269-287.</li>
+      <li>Leota J, Presby DM, Le F, Czeisler MÉ, Mascaro L, Capodilupo ER, et al. Dose-response relationship between evening exercise and sleep. Nat Commun. 2025 Apr 15;16:58271. doi:10.1038/s41467-025-58271-x</li>
+      <li>Kline CE, Hillman CH, Bloodgood Sheppard B, Tennant B, Conroy DE, Macko RF, et al. Physical activity and sleep: An updated umbrella review of the 2018 Physical Activity Guidelines Advisory Committee report. Sleep Med Rev. 2021;58:101489.</li>
       <li>Wittmann M, Dinich J, Merrow M, Roenneberg T. Social jetlag: misalignment of biological and social time. Chronobiol Int. 2006;23(1-2):497-509.</li>
       <li>Johns MW. A new method for measuring daytime sleepiness: the Epworth sleepiness scale. Sleep. 1991;14(6):540-545.</li>
       <li>Berry RB, Quan SF, Abreu AR, et al. The AASM Manual for the Scoring of Sleep and Associated Events: Rules, Terminology and Technical Specifications. Version 2.6. Darien, IL: American Academy of Sleep Medicine; 2020.</li>
     </ol>
-    <p class="source-note-extra">年齡振幅修正已移除；ESS 斜率調整、睡眠效率清除速率調整、生理時鐘低點估計法為本工具設計延伸，非文獻直接數據，僅供自我觀察參考，不能取代專業診斷。</p>
+    <p class="source-note-extra">ESS 斜率調整、睡眠效率清除速率調整、生理時鐘低點估計法為本工具設計延伸，非雙歷程文獻內容，僅供自我觀察參考，不能取代專業診斷。</p>
   </footer>
 
   <script src="model.js"></script>
