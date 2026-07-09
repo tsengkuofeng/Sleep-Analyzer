@@ -127,37 +127,37 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
     box-shadow:0 0 0 6px rgba(255,255,255,0.7), 0 0 34px 16px rgba(44,109,181,0.42); }
 }
 /* Water fill: height is set directly from --level, so the fill amount
-   always matches the percentage exactly. The wave strips below are SOLID
-   (SVG wave shapes, not a translucent highlight), positioned straddling
-   the water's top edge (top:0 + translateY(-50%)), so the wavy line IS
-   the fill's own boundary -- there is no separate flat edge underneath to
-   show through, and it always tracks the real level exactly. */
+   always matches the percentage exactly. The wave shapes below are plain
+   CSS (rotating rounded blobs, same solid colour as the fill -- no
+   external image/data-URI involved, so nothing can silently fail to
+   load). Their vertical reach above the boundary is kept small and fixed
+   (6px / 4px) so they read as a gentle crest, never as a big bleed. */
 .orbit-center .water-fill{
   position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
-  overflow:hidden; opacity:0; z-index:0;
+  overflow:visible; opacity:0; z-index:0;
   transition:opacity .4s ease, height .8s ease;
   background:linear-gradient(180deg, #5b9bdb 0%, #2c6db5 55%, #235a92 100%);
 }
 .orbit-center[data-stage="0"] .water-fill{ opacity:1; }
-.orbit-center .water-fill::before, .orbit-center .water-fill::after{
-  content:""; position:absolute; left:-10%; right:-10%; top:0; height:12px;
-  transform:translateY(-50%);
-  background-repeat:repeat-x; background-size:40px 12px;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 12'><path d='M0,6 C10,-4 30,16 40,6 L40,12 L0,12 Z' fill='%235b9bdb'/></svg>");
-  animation:orbit-wave-shimmer 4.5s linear infinite;
+.orbit-center .water-fill::before{
+  content:""; position:absolute; left:50%; top:0; width:64px; height:64px;
+  transform:translate(-50%,-6px) rotate(0deg);
+  border-radius:42%; background:#5b9bdb;
+  animation:orbit-wave-sway 4.5s linear infinite;
 }
 .orbit-center .water-fill::after{
-  height:8px; background-size:30px 8px;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 8'><path d='M0,4 C7,-3 23,11 30,4 L30,8 L0,8 Z' fill='%232c6db5'/></svg>");
-  opacity:0.85; animation:orbit-wave-shimmer2 6.5s linear infinite reverse;
+  content:""; position:absolute; left:50%; top:0; width:48px; height:48px;
+  transform:translate(-50%,-4px) rotate(0deg);
+  border-radius:44%; background:#5b9bdb; opacity:0.8;
+  animation:orbit-wave-sway2 6.5s linear infinite reverse;
 }
-@keyframes orbit-wave-shimmer{
-  from{ background-position-x:0; }
-  to{ background-position-x:-40px; }
+@keyframes orbit-wave-sway{
+  from{ transform:translate(-50%,-6px) rotate(0deg); }
+  to{ transform:translate(-50%,-6px) rotate(360deg); }
 }
-@keyframes orbit-wave-shimmer2{
-  from{ background-position-x:0; }
-  to{ background-position-x:-30px; }
+@keyframes orbit-wave-sway2{
+  from{ transform:translate(-50%,-4px) rotate(0deg); }
+  to{ transform:translate(-50%,-4px) rotate(360deg); }
 }
 .orbit-center .center-text{ position:relative; z-index:1; }
 .orbit-center .center-value{
