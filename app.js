@@ -335,7 +335,7 @@
         <div class="sat-value">${fmtClock(d.firstOnset)}</div>
         <div class="sat-label">預測入睡</div>
       </div>
-      <div class="orbit-sat sat-c" title="預測<br>睡眠長度">
+      <div class="orbit-sat sat-c" title="預測睡眠長度">
         <div class="sat-value">${d.duration.toFixed(1)}h</div>
         <div class="sat-label">預測睡眠長度</div>
       </div>
