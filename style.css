@@ -137,20 +137,20 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 }
 .orbit-center[data-stage="0"] .water-fill{ opacity:1; }
 .orbit-center .water-fill::before{
-  content:""; position:absolute; left:-25%; top:-8px; width:150%; height:18px;
+  content:""; position:absolute; left:-60px; top:-1px; width:calc(100% + 120px); height:20px;
   background:
-    radial-gradient(ellipse at center, rgba(255,255,255,0.35) 0 35%, transparent 36%) 0 0 / 36px 18px repeat-x;
-  animation:small-wave 3.2s linear infinite;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='20' viewBox='0 0 120 20'%3E%3Cpath d='M0 0H120V8C105 14 90 14 75 8S45 2 30 8S0 14 -15 8V0Z' fill='%23ffffff' fill-opacity='0.94'/%3E%3C/svg%3E") 0 0 / 120px 20px repeat-x;
+  animation:small-wave 5.2s linear infinite;
 }
 .orbit-center .water-fill::after{
-  content:""; position:absolute; left:-25%; top:-5px; width:150%; height:14px;
+  content:""; position:absolute; left:-60px; top:5px; width:calc(100% + 120px); height:12px;
   background:
-    radial-gradient(ellipse at center, rgba(44,109,181,0.45) 0 35%, transparent 36%) 18px 0 / 40px 14px repeat-x;
-  animation:small-wave 4.6s linear infinite reverse;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='12' viewBox='0 0 120 12'%3E%3Cpath d='M0 5C15 11 30 11 45 5S75 -1 90 5S120 11 135 5' fill='none' stroke='%23275f9b' stroke-opacity='0.28' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 120px 12px repeat-x;
+  animation:small-wave 7.5s linear infinite reverse;
 }
 @keyframes small-wave{
   from{ transform:translateX(0); }
-  to{ transform:translateX(36px); }
+  to{ transform:translateX(120px); }
 }
 @keyframes water-rise-fall{
   0%, 100%{ transform:translateY(0); }
