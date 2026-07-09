@@ -128,10 +128,11 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 }
 /* Water fill: height is set directly from --level, so the fill amount
    always matches the percentage exactly. The wave shapes below are plain
-   CSS (rotating rounded blobs, same solid colour as the fill -- no
-   external image/data-URI involved, so nothing can silently fail to
-   load). Their vertical reach above the boundary is kept small and fixed
-   (6px / 4px) so they read as a gentle crest, never as a big bleed. */
+   CSS (rotating rounded blobs) kept DELIBERATELY SMALL -- both their
+   total size and how far they poke above the boundary (2-3px) -- so
+   only a thin sliver shows, never a big solid lump sitting inside the
+   gradient fill. background:inherit re-renders the same gradient on the
+   tiny blob itself so its colour matches the fill right at that height. */
 .orbit-center .water-fill{
   position:absolute; left:0; right:0; bottom:0; height:var(--level, 50%);
   overflow:visible; opacity:0; z-index:0;
@@ -140,24 +141,24 @@ p.source-note-extra{margin:6px 0 0; text-align:left; font-size:0.68rem; color:#9
 }
 .orbit-center[data-stage="0"] .water-fill{ opacity:1; }
 .orbit-center .water-fill::before{
-  content:""; position:absolute; left:50%; top:0; width:64px; height:64px;
-  transform:translate(-50%,-6px) rotate(0deg);
-  border-radius:42%; background:#5b9bdb;
+  content:""; position:absolute; left:50%; top:0; width:34px; height:16px;
+  transform:translate(-50%,-3px) rotate(0deg);
+  border-radius:45%; background:inherit;
   animation:orbit-wave-sway 4.5s linear infinite;
 }
 .orbit-center .water-fill::after{
-  content:""; position:absolute; left:50%; top:0; width:48px; height:48px;
-  transform:translate(-50%,-4px) rotate(0deg);
-  border-radius:44%; background:#5b9bdb; opacity:0.8;
+  content:""; position:absolute; left:50%; top:0; width:26px; height:11px;
+  transform:translate(-50%,-2px) rotate(0deg);
+  border-radius:45%; background:inherit; opacity:0.85;
   animation:orbit-wave-sway2 6.5s linear infinite reverse;
 }
 @keyframes orbit-wave-sway{
-  from{ transform:translate(-50%,-6px) rotate(0deg); }
-  to{ transform:translate(-50%,-6px) rotate(360deg); }
+  from{ transform:translate(-50%,-3px) rotate(0deg); }
+  to{ transform:translate(-50%,-3px) rotate(360deg); }
 }
 @keyframes orbit-wave-sway2{
-  from{ transform:translate(-50%,-4px) rotate(0deg); }
-  to{ transform:translate(-50%,-4px) rotate(360deg); }
+  from{ transform:translate(-50%,-2px) rotate(0deg); }
+  to{ transform:translate(-50%,-2px) rotate(360deg); }
 }
 .orbit-center .center-text{ position:relative; z-index:1; }
 .orbit-center .center-value{
